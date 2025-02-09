@@ -1,16 +1,22 @@
+import { useRouter } from 'next/router';
 import type { AppProps } from 'next/app';
+import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/context/AuthContext';
 import { NotificationProvider } from '@/context/NotificationContext';
-import MainLayout from '@/components/layout/MainLayout';
+import Layout from '@/components/Layout';
 import '@/styles/globals.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
+  const router = useRouter();
+  const isHomePage = router.pathname === '/';
+
   return (
     <AuthProvider>
       <NotificationProvider>
-        <MainLayout>
+        <Layout isHomePage={isHomePage}>
           <Component {...pageProps} />
-        </MainLayout>
+          <Toaster position="bottom-right" />
+        </Layout>
       </NotificationProvider>
     </AuthProvider>
   );

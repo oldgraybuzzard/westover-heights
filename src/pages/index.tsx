@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 
@@ -6,37 +7,45 @@ const HomePage: React.FC = () => {
   const { user } = useAuth();
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12">
+    <main className="animate-fade-in">
       {/* Hero Section */}
-      <div className="text-center mb-16">
-        <div className="mb-4 text-primary font-semibold text-xl">
-          Westover Heights Clinic
+      <section className="relative h-[600px] flex items-center -mt-16">
+        {/* Hero Background */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/images/hero.jpg"
+            alt="Westover Heights Clinic"
+            fill
+            className="object-cover"
+            priority
+            quality={90}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/50" />
         </div>
-        <h1 className="text-5xl font-bold text-gray-900 mb-6">
-          Expert Herpes Care & Research
-        </h1>
-        <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-          Get expert guidance from Terri Warren and the Westover Heights Clinic team
-          through our Q&A forum, secure video consultations, and participate in our
-          herpes Western blot research study
-        </p>
-        {!user && (
-          <div className="space-x-4">
-            <Link
-              href="/register"
-              className="btn-primary btn-lg"
-            >
-              Get Started
+
+        {/* Hero Content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 text-white">
+          <div className="text-xl text-primary-100 mb-2">
+            Support You Can Trust, Relief You Deserve
+          </div>
+          <h1 className="text-5xl font-bold mb-6">
+            Expert Care for Herpes Management
+          </h1>
+          <p className="text-xl mb-8 max-w-2xl">
+            Empower Yourself—Get the Guidance You Need. With over 35 years of specialized
+            experience, we provide comprehensive care, testing, and consultation services
+            for herpes and other STIs.
+          </p>
+          <div className="flex gap-4">
+            <Link href="/western-blot" className="btn-primary">
+              Get Western Blot Testing
             </Link>
-            <Link
-              href="/login"
-              className="btn-secondary btn-lg"
-            >
-              Sign In
+            <Link href="/forum" className="btn-secondary">
+              Ask a Question
             </Link>
           </div>
-        )}
-      </div>
+        </div>
+      </section>
 
       {/* Service Cards */}
       <div className="grid md:grid-cols-3 gap-8">
@@ -172,7 +181,7 @@ const HomePage: React.FC = () => {
           <div className="text-gray-600">Specialized Care</div>
         </div>
       </div>
-    </div>
+    </main>
   );
 };
 

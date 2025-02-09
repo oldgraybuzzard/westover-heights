@@ -73,4 +73,14 @@ logs
 .yarn-integrity
 
 # Local Netlify folder
-.netlify 
+.netlify
+
+# Local files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Exclude PDFs from git but keep the directory
+public/pdf/*
+!public/pdf/.gitkeep 

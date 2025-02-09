@@ -106,7 +106,7 @@ const ContactPage: React.FC = () => {
   };
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-12 pt-[120px]">
+    <main className="max-w-4xl mx-auto px-4 py-12 pt-16 animate-fade-in">
       <h1 className="text-4xl font-bold text-gray-900 mb-6">Contact Us</h1>
 
       {/* Information Section */}
@@ -195,56 +195,4 @@ const ContactPage: React.FC = () => {
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className={`form-input ${errors.email ? 'border-red-500' : ''}`}
-              required
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              How did you hear about us?
-            </label>
-            <input
-              type="text"
-              value={formData.referralSource}
-              onChange={(e) => setFormData({ ...formData, referralSource: e.target.value })}
-              className={`form-input ${errors.referralSource ? 'border-red-500' : ''}`}
-            />
-            {errors.referralSource && (
-              <p className="mt-1 text-sm text-red-600">{errors.referralSource}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Message*
-            </label>
-            <textarea
-              value={formData.message}
-              onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-              rows={5}
-              className={`form-textarea ${errors.message ? 'border-red-500' : ''}`}
-              required
-            />
-            {errors.message && (
-              <p className="mt-1 text-sm text-red-600">{errors.message}</p>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`btn-primary w-full ${isSubmitting ? 'btn-disabled' : ''}`}
-          >
-            {isSubmitting ? 'Sending...' : 'Send Message'}
-          </button>
-        </form>
-      </div>
-    </main>
-  );
-};
-
-export default ContactPage; 
+              className={`form-input ${errors.email ? 'border-red-500' : ''}`

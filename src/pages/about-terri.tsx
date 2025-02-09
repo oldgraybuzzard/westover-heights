@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 const AboutTerri: React.FC = () => {
   return (
-    <main className="max-w-4xl mx-auto px-4 py-12 pt-[120px] animate-fade-in">
+    <main className="max-w-4xl mx-auto px-4 py-12 pt-16 animate-fade-in">
       <div className="bg-white rounded-lg shadow-md p-8">
         <h1 className="text-4xl font-bold text-gray-900 mb-8">About Terri</h1>
 
