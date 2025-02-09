@@ -132,4 +132,9 @@ body {
 
 .hover-grow {
   @apply transition-transform duration-200 hover:scale-105;
+}
+
+/* List item hover effects */
+.hover-list-item {
+  @apply transition-colors duration-200 hover:text-primary cursor-default;
 } 
