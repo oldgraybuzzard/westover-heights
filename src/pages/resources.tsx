@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { FaFileDownload, FaVideo, FaExternalLinkAlt } from 'react-icons/fa';
 import PdfViewer from '@/components/PdfViewer';
 
@@ -31,6 +32,73 @@ const ResourcesPage: React.FC = () => {
             pdfUrl="/pdf/Herpes-Handbook-ESP-1.pdf"
             title="Manual de Herpes (Español)"
           />
+        </div>
+      </section>
+
+      {/* The Good News About The Bad News Book Section */}
+      <section className="bg-white rounded-lg shadow-md p-8 mb-8">
+        <h2 className="text-2xl font-semibold text-gray-900 mb-4">The Good News About The Bad News</h2>
+        <div className="md:flex gap-8">
+          <div className="md:w-1/4 mb-6 md:mb-0">
+            <Image
+              src="/images/book-cover.jpg"
+              alt="The Good News About The Bad News book cover"
+              width={240}
+              height={360}
+              priority
+              className="rounded-lg shadow-md mx-auto"
+              style={{
+                width: '100%',
+                height: 'auto',
+                maxWidth: '240px'
+              }}
+            />
+            <div className="mt-4 flex flex-col gap-3">
+              <a
+                href="#paypal-link"
+                className="btn-primary block text-center text-sm py-2"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Buy from Us via PayPal
+              </a>
+              <a
+                href="https://www.amazon.com/Good-News-About-Bad-Herpes/dp/1572246189"
+                className="btn-secondary block text-center text-sm py-2"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Buy on Amazon
+              </a>
+            </div>
+          </div>
+          <div className="md:w-3/4">
+            <div className="prose max-w-none text-gray-700">
+              <p className="mb-4">
+                Terri Warren is the author of the best-selling book on Herpes on Amazon.com.
+                <span className="font-semibold italic">The Good News About the Bad News – Herpes: Everything You Need to Know</span>
+                is a complete guide to living and loving with genital herpes with this core message:
+                a herpes diagnosis is not the end of the world.
+              </p>
+              <p className="mb-4">
+                Written in a positive, honest, and straightforward style, this book shows readers how they
+                can live fulfilling and sexually active lives with the virus. The author offers information on:
+              </p>
+              <ul className="list-disc pl-6 mb-4">
+                <li>Understanding herpes symptoms and triggers</li>
+                <li>Treatment options and latest research</li>
+                <li>Reducing transmission to future partners</li>
+                <li>Breaking the news to potential partners</li>
+                <li>Coping with herpes in relationships</li>
+                <li>Finding support groups and resources</li>
+              </ul>
+              <p>
+                Each chapter addresses the most common questions and concerns people with herpes have,
+                based on Terri's experiences counseling thousands of people with genital herpes in her
+                sexual health clinic and online as the herpes expert at WebMD.com.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
