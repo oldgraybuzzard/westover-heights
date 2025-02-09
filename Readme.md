@@ -1,51 +1,53 @@
-# Westover Heights Forum Platform
+# Westover Heights Medical Forum Platform
 
-A modern, full-stack forum platform with integrated payment system for Q&A services. This platform supports both web and mobile interfaces, allowing users to view discussions and submit paid questions to receive expert answers.
+A HIPAA-compliant medical Q&A platform that enables secure, anonymous communication between patients and medical professionals. The platform supports both web and mobile interfaces, allowing users to view public discussions and submit private paid questions to receive expert medical guidance.
 
-## 🌟 Features
+## 🌟 Key Features
 
-### Web Platform
-- 🔐 Secure user authentication and authorization
-- 💬 Public forum viewing for all users
-- 💰 Integrated payment system for asking questions
+### Privacy & Security
+- 🔒 HIPAA-compliant infrastructure and data handling
+- 🎭 Anonymous public posting system
+- 🗑️ User data self-deletion capabilities
+- 📜 Audit logging for compliance
+- 🔐 Secure authentication and authorization
+
+### Forum Features
+- 👀 Public forum viewing without registration
+- 💰 $25 per question with two follow-up questions
 - 📝 Rich text editor for question submission
-- 👑 Admin dashboard for managing questions and users
-- 🔍 Advanced search functionality
+- 👨‍⚕️ Dedicated admin interface for medical professional responses
+- 🔍 Searchable knowledge base
 - 📱 Responsive design for all devices
 
-### Mobile App
-- 📱 Native mobile experience
-- 🔄 Real-time notifications
-- 📴 Offline support
-- 👆 Touch-optimized interface
-- 📸 Camera integration for attachments
+### Payment System
+- 💳 Secure payment processing
+- 🔄 Automated question credit system
+- 📊 Transaction tracking and reporting
 
 ## 🏗️ Tech Stack
 
 ### Frontend
-- React.js
-- Next.js
-- Tailwind CSS
-- Redux Toolkit
-- TypeScript
+- React.js with Next.js for SSR
+- Tailwind CSS for styling
+- Redux Toolkit for state management
+- TypeScript for type safety
 
 ### Backend
-- Node.js
-- Express.js
-- MongoDB
-- JWT Authentication
-- Socket.IO
+- Node.js with Express.js
+- MongoDB with encryption at rest
+- JWT for secure authentication
+- Socket.IO for real-time updates
 
-### Mobile
-- React Native
-- Expo
-- AsyncStorage
-- React Navigation
+### Security & Compliance
+- HIPAA-compliant data storage
+- End-to-end encryption
+- Regular security audits
+- Data anonymization protocols
 
 ### Payment Processing
-- Stripe Integration
-- Secure payment handling
-- Multiple payment methods support
+- Stripe integration
+- PCI-compliant payment handling
+- Secure payment token system
 
 ## 🚀 Getting Started
 
@@ -54,7 +56,8 @@ A modern, full-stack forum platform with integrated payment system for Q&A servi
 - MongoDB
 - npm or yarn
 - Stripe account
-- React Native development environment (for mobile)
+- SSL certificates
+- HIPAA-compliant hosting environment
 
 ### Installation
 
