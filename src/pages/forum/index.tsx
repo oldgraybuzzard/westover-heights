@@ -1,118 +1,132 @@
-import React, { useState } from 'react';
-import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
+import { supabase, Topic } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
-import ForumTopicList from '@/components/forum/ForumTopicList';
-import Pagination from '@/components/forum/Pagination';
+import { format } from 'date-fns';
 import { FaPlus, FaFilter } from 'react-icons/fa';
 
-const TOPICS_PER_PAGE = 20;
+export default function ForumPage() {
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-const ForumPage: React.FC = () => {
-  const router = useRouter();
-  const { user } = useAuth();
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('all');
+  useEffect(() => {
+    let mounted = true;
 
-  // Mock data - replace with actual API call
-  const topics = [
-    {
-      id: '1',
-      title: 'Question About Test and Next Steps',
-      author: 'faulknerfan23',
-      forum: 'Herpes Questions',
-      replies: 1,
-      lastPost: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
-      status: 'open' as const,
-    },
-    // ... more topics
-  ];
+    async function loadTopics() {
+      try {
+        console.log('Loading topics...');
 
-  const categories = [
-    { id: 'all', name: 'All Categories' },
-    { id: 'herpes-questions', name: 'Herpes Questions' },
-    { id: 'testing', name: 'Testing & Diagnosis' },
-    { id: 'treatment', name: 'Treatment Options' },
-  ];
+        const { data, error } = await supabase
+          .from('topics')
+          .select(`
+            *,
+            author:profiles(*)
+          `)
+          .order('created_at', { ascending: false });
 
-  const statuses = [
-    { id: 'all', name: 'All Statuses' },
-    { id: 'open', name: 'Open' },
-    { id: 'answered', name: 'Answered' },
-    { id: 'closed', name: 'Closed' },
-  ];
+        console.log('Topics data:', data);
+
+        if (error) {
+          throw error;
+        }
+
+        if (mounted) {
+          setTopics(data || []);
+        }
+      } catch (e) {
+        console.error('Error loading topics:', e);
+        if (mounted) {
+          setError(e instanceof Error ? e.message : 'An error occurred');
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadTopics();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div>Loading topics...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-red-500">Error: {error}</div>
+      </div>
+    );
+  }
 
   return (
-    <main className="max-w-6xl mx-auto px-4 py-12 pt-16 animate-fade-in">
+    <div className="max-w-6xl mx-auto px-4 py-12 pt-16 animate-fade-in">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold text-gray-900">Herpes Forum</h1>
-        {user && (
-          <Link href="/forum/new" className="btn-primary flex items-center gap-2">
-            <FaPlus /> New Question
-          </Link>
-        )}
+        <Link
+          href="/forum/new"
+          className="btn-primary flex items-center gap-2"
+        >
+          <FaPlus /> New Question
+        </Link>
       </div>
 
-      {/* Filters */}
+      {/* Categories filter */}
       <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
         <div className="flex items-center gap-4">
           <FaFilter className="text-gray-400" />
           <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
             className="form-select text-sm"
+            defaultValue="all"
           >
-            {categories.map(category => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="form-select text-sm"
-          >
-            {statuses.map(status => (
-              <option key={status.id} value={status.id}>
-                {status.name}
-              </option>
-            ))}
+            <option value="all">All Categories</option>
+            <option value="testing">Testing & Diagnosis</option>
+            <option value="treatment">Treatment Options</option>
+            <option value="general">General Questions</option>
           </select>
         </div>
       </div>
 
-      {/* Forum List */}
-      <ForumTopicList topics={topics} />
-
-      {/* Pagination */}
-      <Pagination
-        currentPage={1}
-        totalPages={5}
-        baseUrl="/forum"
-      />
-
-      {/* Info for Non-logged in Users */}
-      {!user && (
-        <div className="mt-8 bg-primary/5 rounded-lg p-6 text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Want to Ask a Question?
-          </h2>
-          <p className="text-gray-600 mb-4">
-            Sign in or create an account to post questions and participate in discussions.
-          </p>
-          <div className="flex justify-center gap-4">
-            <Link href="/login" className="btn-primary">
-              Sign In
-            </Link>
-            <Link href="/register" className="btn-secondary">
-              Create Account
+      {/* Topics list */}
+      <div className="space-y-4">
+        {topics.map((topic) => (
+          <div
+            key={topic.id}
+            className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
+          >
+            <Link href={`/forum/${topic.id}`}>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-xl font-semibold hover:text-primary">
+                    {topic.title}
+                  </h2>
+                  <p className="text-gray-600 mt-1">
+                    Posted by {topic.author?.display_name} in {topic.category}
+                  </p>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-sm ${topic.status === 'OPEN' ? 'bg-green-100 text-green-800' :
+                  topic.status === 'ANSWERED' ? 'bg-blue-100 text-blue-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                  {topic.status}
+                </span>
+              </div>
+              <p className="text-gray-500 text-sm mt-2">
+                {format(new Date(topic.created_at), 'MMM d, yyyy')}
+              </p>
             </Link>
           </div>
-        </div>
-      )}
-    </main>
+        ))}
+      </div>
+    </div>
   );
-};
-
-export default ForumPage; 
+} 

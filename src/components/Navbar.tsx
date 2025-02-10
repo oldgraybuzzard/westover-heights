@@ -7,6 +7,14 @@ const Navbar: React.FC = () => {
 
   const isActive = (path: string) => router.pathname === path;
 
+  const navigation = [
+    { name: 'Home', href: '/' },
+    { name: 'About Terri', href: '/about-terri' },
+    { name: 'Resources', href: '/resources' },
+    { name: 'Forum', href: '/forum' },
+    { name: 'Contact', href: '/contact' },
+  ];
+
   return (
     <nav className="bg-white/95 backdrop-blur-sm shadow-md fixed w-full z-50 top-0 -mt-4">
       <div className="max-w-7xl mx-auto px-4">

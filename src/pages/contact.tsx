@@ -195,4 +195,55 @@ const ContactPage: React.FC = () => {
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className={`form-input ${errors.email ? 'border-red-500' : ''}`
+              className={`form-input ${errors.email ? 'border-red-500' : ''}`}
+              required
+            />
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Referral Source
+            </label>
+            <input
+              type="text"
+              value={formData.referralSource}
+              onChange={(e) => setFormData({ ...formData, referralSource: e.target.value })}
+              className={`form-input ${errors.referralSource ? 'border-red-500' : ''}`}
+            />
+            {errors.referralSource && (
+              <p className="mt-1 text-sm text-red-600">{errors.referralSource}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Message*
+            </label>
+            <textarea
+              value={formData.message}
+              onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+              className={`form-textarea ${errors.message ? 'border-red-500' : ''}`}
+              required
+            />
+            {errors.message && (
+              <p className="mt-1 text-sm text-red-600">{errors.message}</p>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/80"
+          >
+            {isSubmitting ? 'Sending...' : 'Send Message'}
+          </button>
+        </form>
+      </div>
+    </main>
+  );
+};
+
+export default ContactPage;
