@@ -1,19 +1,17 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import type { Database } from '@/types/supabase';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Add a simple delay function
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-  },
-  db: {
-    schema: 'public'
+// Create a rate-limited client
+export const supabase = createClientComponentClient<Database>({
+  cookieOptions: {
+    name: 'sb-auth-token',
+    domain: typeof window !== 'undefined' ? window.location.hostname : undefined,
+    path: '/',
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production'
   }
 });
 
@@ -47,4 +45,89 @@ export type Reply = {
   created_at: string;
   updated_at: string;
   author?: Profile;
-}; 
+};
+
+// Add realtime subscription for role changes
+export function subscribeToRoleChanges(userId: string, onRoleChange: (newRole: string) => void) {
+  return supabase
+    .channel('role-changes')
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'profiles',
+        filter: `id=eq.${userId}`,
+      },
+      (payload) => {
+        if (payload.new.role !== payload.old.role) {
+          onRoleChange(payload.new.role);
+        }
+      }
+    )
+    .subscribe();
+}
+
+export async function handleSupabaseError(error: any) {
+  if (error?.message?.includes('Invalid Refresh Token') || error?.status === 400) {
+    // Clear the invalid session
+    await supabase.auth.signOut();
+    if (typeof window !== 'undefined') {
+      window.location.href = '/auth/signin';
+    }
+    return;
+  }
+  
+  if (error?.status === 429) {
+    console.warn('Rate limit reached. Please try again in a few minutes.');
+    // Don't throw, just return to prevent retry loops
+    return;
+  }
+  
+  throw error;
+}
+
+// Add a function to check reply limits
+export async function canAddReply(topicId: string, userId: string) {
+  const { data: replies, error } = await supabase
+    .from('replies')
+    .select('id')
+    .eq('topic_id', topicId)
+    .eq('author_id', userId);
+
+  if (error) {
+    await handleSupabaseError(error);
+    return false;
+  }
+
+  // Limit to 2 follow-up replies per user per topic
+  return replies?.length < 2;
+}
+
+// Optional: Add a function to get current reply count
+export async function getUserReplyCount(topicId: string, userId: string) {
+  const { data: replies, error } = await supabase
+    .from('replies')
+    .select('id')
+    .eq('topic_id', topicId)
+    .eq('author_id', userId);
+
+  if (error) {
+    await handleSupabaseError(error);
+    return 0;
+  }
+
+  return replies?.length || 0;
+}
+
+export async function updateCanPost(userId: string) {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ 
+      can_post: true,
+      post_count: 0  // Reset post count after payment
+    })
+    .eq('id', userId);
+    
+  if (error) throw error;
+}

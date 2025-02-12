@@ -1,10 +1,25 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
+import dynamic from 'next/dynamic';
+
+const AuthContent = dynamic(() => import('@/components/AuthContent'), {
+  ssr: false
+});
 
 const HomePage: React.FC = () => {
-  const { user } = useAuth();
+  const [mounted, setMounted] = useState(false);
+  const auth = useAuth();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Don't render anything auth-related during SSR
+  if (!mounted) {
+    return <div>Loading...</div>; // Or your initial loading state
+  }
 
   return (
     <main className="animate-fade-in">
@@ -181,6 +196,8 @@ const HomePage: React.FC = () => {
           <div className="text-gray-600">Specialized Care</div>
         </div>
       </div>
+
+      <AuthContent />
     </main>
   );
 };

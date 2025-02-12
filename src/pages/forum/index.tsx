@@ -3,11 +3,15 @@ import { supabase, Topic } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { FaPlus, FaFilter } from 'react-icons/fa';
+import { useAuth } from '@/contexts/AuthContext';
+import { subscribeToRoleChanges } from '@/lib/supabase/client';
+import { toast } from 'react-hot-toast';
 
 export default function ForumPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     let mounted = true;
@@ -47,10 +51,17 @@ export default function ForumPage() {
 
     loadTopics();
 
+    if (!user) return;
+
+    const subscription = subscribeToRoleChanges(user.id, (newRole) => {
+      toast.success(`Your role has been updated to ${newRole.toLowerCase()}`);
+    });
+
     return () => {
       mounted = false;
+      subscription.unsubscribe();
     };
-  }, []);
+  }, [user]);
 
   if (loading) {
     return (

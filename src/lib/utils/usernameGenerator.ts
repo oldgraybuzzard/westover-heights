@@ -1,18 +1,25 @@
-import { PrismaClient } from '@prisma/client';
-import { customAlphabet } from 'nanoid';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import type { Database } from '@/types/supabase';
 
-const prisma = new PrismaClient();
-const nanoid = customAlphabet('123456789abcdefghijklmnpqrstuvwxyz', 8);
-
-export async function generateUsername(): Promise<string> {
+export async function generateUniqueUsername(base: string): Promise<string> {
+  const supabase = createClientComponentClient<Database>();
+  const sanitized = base.toLowerCase().replace(/[^a-z0-9]/g, '');
+  
+  let username = sanitized;
+  let counter = 1;
+  
   while (true) {
-    const username = `user_${nanoid()}`;
-    const exists = await prisma.user.findUnique({
-      where: { displayName: username },
-    });
-    
-    if (!exists) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('username', username as string)
+      .single();
+
+    if (!data) {
       return username;
     }
+
+    username = `${sanitized}${counter}`;
+    counter++;
   }
 } 

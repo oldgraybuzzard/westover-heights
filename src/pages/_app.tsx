@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router';
 import type { AppProps } from 'next/app';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from '@/context/AuthContext';
+import { AuthProvider } from '@/contexts/AuthContext';
 import { NotificationProvider } from '@/context/NotificationContext';
 import Layout from '@/components/Layout';
 import '@/styles/globals.css';

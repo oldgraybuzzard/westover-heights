@@ -1,27 +1,62 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { cookies } from 'next/headers';
 
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req, res });
+export async function middleware(request: NextRequest) {
+  try {
+    const res = NextResponse.next();
+    
+    // Create server-side Supabase client
+    const supabase = createServerComponentClient({ 
+      cookies: () => cookies() 
+    });
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    // Get session
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
 
-  // Protected routes
-  if (req.nextUrl.pathname.startsWith('/forum/new') && !session) {
-    return NextResponse.redirect(new URL('/login', req.url));
+    if (error) {
+      console.error('Session error:', error);
+      return handleNoSession(request);
+    }
+
+    const path = request.nextUrl.pathname;
+    const protectedPaths = ['/admin', '/forum/new'];
+
+    if (protectedPaths.some(p => path.startsWith(p)) && !session) {
+      return handleNoSession(request);
+    }
+
+    if (path.startsWith('/forum/new') && session) {
+      // Check if user can post
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('can_post')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Profile error:', profileError);
+        return handleNoSession(request);
+      }
+    }
+
+    return res;
+  } catch (e) {
+    console.error('Middleware error:', e);
+    return handleNoSession(request);
   }
+}
 
-  return res;
+function handleNoSession(request: NextRequest) {
+  const loginUrl = new URL('/login', request.url);
+  loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
+  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {
-  matcher: [
-    '/forum/new',
-    '/forum/topic/:path*/reply',
-    '/profile/:path*',
-  ],
+  matcher: ['/admin/:path*', '/forum/new'],
 }; 
