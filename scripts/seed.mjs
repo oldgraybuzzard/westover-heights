@@ -59,35 +59,18 @@ async function clearDatabase() {
     console.error('Error deleting topics:', topicsError);
   }
 
-  // Delete existing users
-  try {
-    // List all users
-    const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
+  // Reset profiles instead of deleting users
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .update({
+      roles: ['PARTICIPANT'],
+      can_post: false,
+      post_count: 0
+    })
+    .neq('id', '00000000-0000-0000-0000-000000000000');
 
-    if (listError) {
-      console.error('Error listing users:', listError);
-      return;
-    }
-
-    console.log(`Found ${users.length} users to delete`);
-
-    // Delete each user
-    for (const user of users) {
-      try {
-        const { error: deleteError } = await supabase.auth.admin.deleteUser(user.id);
-        if (deleteError) {
-          console.error(`Error deleting user ${user.email}:`, deleteError);
-        } else {
-          console.log(`Deleted user ${user.email}`);
-        }
-      } catch (error) {
-        console.error(`Failed to delete user ${user.email}:`, error);
-      }
-      await sleep(500);
-    }
-
-  } catch (error) {
-    console.error('Error in user cleanup:', error);
+  if (profileError) {
+    console.error('Error resetting profiles:', profileError);
   }
 
   // Wait for deletions to complete
@@ -95,41 +78,58 @@ async function clearDatabase() {
   console.log('Database cleared');
 }
 
-async function createUser(email, password, role = 'USER', displayName = null) {
-  // Create new user
-  const { data, error } = await supabase.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: {
-      role,
-      display_name: displayName || `user_${Math.random().toString(36).slice(2, 10)}`
-    }
-  });
+async function createOrUpdateUser(email, password, roles = ['PARTICIPANT'], displayName = null) {
+  try {
+    // Try to get existing user
+    const { data: { users } } = await supabase.auth.admin.listUsers();
+    const existingUser = users.find(u => u.email === email);
 
-  if (error) {
+    if (existingUser) {
+      console.log(`Updating existing user: ${email}`);
+
+      // First check if display name exists for another user
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('display_name', displayName)
+        .neq('id', existingUser.id)
+        .single();
+
+      if (existingProfile) {
+        // If display name exists, append a random string
+        displayName = `${displayName}_${Math.random().toString(36).slice(2, 4)}`;
+      }
+
+      // Update profile
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          roles,
+          display_name: displayName || existingUser.user_metadata?.display_name
+        })
+        .eq('id', existingUser.id);
+
+      if (updateError) throw updateError;
+      return { user: existingUser };
+    }
+
+    // Create new user if doesn't exist
+    const { data, error } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        roles,
+        display_name: displayName || `user_${Math.random().toString(36).slice(2, 10)}`
+      }
+    });
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error(`Error with user ${email}:`, error);
     throw error;
   }
-
-  // Wait for profile creation trigger
-  await sleep(2000);
-
-  // Update profile if needed
-  if (role !== 'USER' || displayName) {
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({
-        role,
-        display_name: displayName || data.user.user_metadata.display_name
-      })
-      .eq('id', data.user.id);
-
-    if (updateError) {
-      console.error('Error updating profile:', updateError);
-    }
-  }
-
-  return data;
 }
 
 async function seedDatabase() {
@@ -137,18 +137,46 @@ async function seedDatabase() {
   console.log('Starting database seeding...');
 
   try {
-    // Create test user
-    const testUser = await createUser('test@example.com', 'password123');
-    console.log('Created test user:', testUser.user.email);
+    // Create/update admin user
+    const adminUser = await createOrUpdateUser(
+      'k_felder@me.com',
+      'admin123',
+      ['ADMIN'],
+      'Admin'
+    );
+    console.log('Admin user ready:', adminUser.user.email);
 
-    // Create expert user
-    const expertUser = await createUser(
-      'terri@example.com',
+    // Create/update test user
+    const testUser = await createOrUpdateUser(
+      'test@example.com',
+      'password123',
+      ['PARTICIPANT']
+    );
+    console.log('Test user ready:', testUser.user.email);
+
+    // Create/update expert user
+    const expertUser = await createOrUpdateUser(
+      'terri@westoverheights.com',
       'expert123',
-      'EXPERT',
+      ['EXPERT', 'ADMIN'],
       'Terri Warren'
     );
-    console.log('Created expert user:', expertUser.user.email);
+    console.log('Expert user ready:', expertUser.user.email);
+
+    // Wait for profiles to be created and then update roles
+    await sleep(2000);
+
+    // Update admin profile
+    await retry(async () => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ roles: ['ADMIN'], display_name: 'Admin' })
+        .eq('id', adminUser.user.id);
+
+      if (error) throw error;
+      return { error: null };
+    });
+    console.log('Updated admin profile');
 
     // Wait for profiles to be created and then update expert profile
     await sleep(2000); // Wait for trigger to create profiles
@@ -156,7 +184,10 @@ async function seedDatabase() {
     const { error: profileError } = await retry(async () => {
       const { error } = await supabase
         .from('profiles')
-        .update({ role: 'EXPERT', display_name: 'Terri Warren' })
+        .update({
+          roles: ['EXPERT', 'ADMIN'],
+          display_name: 'Terri Warren'
+        })
         .eq('id', expertUser.user.id);
 
       if (error) throw error;

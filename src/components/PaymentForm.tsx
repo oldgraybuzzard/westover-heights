@@ -12,6 +12,8 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
   const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [canPost, setCanPost] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(true);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -55,9 +57,34 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
         throw result.error;
       }
 
+      // Create payment history record
+      const { error: historyError } = await supabase
+        .from('payment_history')
+        .insert({
+          user_id: session.user.id,
+          payment_intent_id: result.paymentIntent?.id,
+          amount: 2500,
+          posts_remaining: 3,
+          status: 'active'
+        });
+
+      if (historyError) throw historyError;
+
       await supabase.rpc('grant_posting_permission', {
         session_id: session.access_token
       });
+
+      if (result.paymentIntent) {
+        const user = await supabase.auth.getUser();
+        if (user.data.user) {
+          await supabase.rpc('grant_posting_permission', {
+            session_id: session.access_token
+          });
+          setCanPost(true);
+          setShowPaymentModal(false);
+          toast.success('You can now post your question!');
+        }
+      }
 
       toast.success('Payment successful! You can now post questions.');
       onSuccess?.();

@@ -1,14 +1,83 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { FaBars, FaTimes } from 'react-icons/fa';
+import { FaBars, FaTimes, FaUser, FaCog, FaSignOutAlt } from 'react-icons/fa';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
+import Image from 'next/image';
+import { Menu, Transition } from '@headlessui/react';
+
+const UserMenu = () => {
+  const { user, userRoles, signOut, isAdmin, isExpert } = useAuth();
+
+  return (
+    <Menu as="div" className="relative">
+      <Menu.Button className="flex items-center gap-2 text-gray-600 hover:text-primary">
+        <FaUser />
+        <span>{isAdmin() ? 'Admin' : isExpert() ? 'Expert' : 'Participant'}</span>
+      </Menu.Button>
+
+      <Transition
+        enter="transition duration-100 ease-out"
+        enterFrom="transform scale-95 opacity-0"
+        enterTo="transform scale-100 opacity-100"
+        leave="transition duration-75 ease-out"
+        leaveFrom="transform scale-100 opacity-100"
+        leaveTo="transform scale-95 opacity-0"
+      >
+        <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+          <div className="py-1">
+            <Menu.Item>
+              {({ active }) => (
+                <Link
+                  href="/account/settings"
+                  className={`${active ? 'bg-gray-100' : ''
+                    } flex items-center gap-2 px-4 py-2 text-sm text-gray-700`}
+                >
+                  <FaCog className="w-4 h-4" />
+                  Account Settings
+                </Link>
+              )}
+            </Menu.Item>
+
+            {isAdmin() && (
+              <Menu.Item>
+                {({ active }) => (
+                  <Link
+                    href="/admin/users"
+                    className={`${active ? 'bg-gray-100' : ''
+                      } flex items-center gap-2 px-4 py-2 text-sm text-gray-700`}
+                  >
+                    <FaUser className="w-4 h-4" />
+                    Manage Users
+                  </Link>
+                )}
+              </Menu.Item>
+            )}
+
+            <Menu.Item>
+              {({ active }) => (
+                <button
+                  onClick={signOut}
+                  className={`${active ? 'bg-gray-100' : ''
+                    } flex items-center gap-2 px-4 py-2 text-sm text-gray-700 w-full`}
+                >
+                  <FaSignOutAlt className="w-4 h-4" />
+                  Log Out
+                </button>
+              )}
+            </Menu.Item>
+          </div>
+        </Menu.Items>
+      </Transition>
+    </Menu>
+  );
+};
 
 const Navbar: React.FC = () => {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, userRoles, signOut, isAdmin, isExpert } = useAuth();
 
   const isActive = (path: string) => router.pathname === path;
 
@@ -30,13 +99,21 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className="bg-white/95 backdrop-blur-sm shadow-md fixed w-full z-50 top-0 -mt-4">
+    <nav className="bg-white/90 backdrop-blur-sm shadow-md fixed w-full z-50 top-4 -mt-4">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between h-16">
-          {/* Logo */}
-          <div className="flex-shrink-0 flex items-center">
+          <div className="flex items-center space-x-2">
+            <Link href="/">
+              <Image
+                src="/images/logo.jpg"
+                alt="Westover Heights Clinic"
+                width={48}
+                height={48}
+                style={{ width: '48px', height: '48px' }}
+              />
+            </Link>
             <Link href="/" className="text-xl font-bold text-primary">
-              Westover Heights
+              Westover Heights Clinic
             </Link>
           </div>
 
@@ -67,7 +144,7 @@ const Navbar: React.FC = () => {
                 : 'text-gray-600 hover:text-primary'
                 } transition-colors`}
             >
-              Forum
+              {isExpert() ? 'Answer Questions' : 'Forum'}
             </Link>
             <Link
               href="/western-blot"
@@ -89,15 +166,10 @@ const Navbar: React.FC = () => {
             </Link>
           </div>
 
-          {/* Auth button - desktop */}
-          <div className="hidden sm:flex items-center">
+          {/* Auth section */}
+          <div className="hidden sm:flex items-center space-x-4">
             {user ? (
-              <button
-                onClick={handleSignOut}
-                className="text-gray-600 hover:text-primary transition-colors"
-              >
-                Log Out
-              </button>
+              <UserMenu />
             ) : (
               <Link
                 href="/login"
@@ -170,19 +242,31 @@ const Navbar: React.FC = () => {
               Contact
             </Link>
             {user ? (
-              <button
-                onClick={() => {
-                  handleSignOut();
-                  setIsOpen(false);
-                }}
-                className="mobile-nav-link w-full text-left"
-              >
-                Log Out
-              </button>
+              <>
+                <div className="px-3 py-2 text-sm text-gray-500">
+                  Logged in as {isAdmin() ? 'Admin' : isExpert() ? 'Expert' : 'Participant'}
+                </div>
+                <Link
+                  href="/account/settings"
+                  className="block px-3 py-2 text-gray-600 hover:text-primary"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Account Settings
+                </Link>
+                <button
+                  onClick={() => {
+                    handleSignOut();
+                    setIsOpen(false);
+                  }}
+                  className="block w-full text-left px-3 py-2 text-gray-600 hover:text-primary"
+                >
+                  Log Out
+                </button>
+              </>
             ) : (
               <Link
                 href="/login"
-                className="mobile-nav-link"
+                className="block px-3 py-2 text-gray-600 hover:text-primary"
                 onClick={() => setIsOpen(false)}
               >
                 Log In

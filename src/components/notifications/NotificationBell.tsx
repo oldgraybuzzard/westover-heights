@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useNotifications } from '@/context/NotificationContext';
+import { useNotification } from '@/contexts/NotificationContext';
 
 const NotificationBell: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { notifications, unreadCount, markAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead } = useNotification();
 
   return (
     <div className="relative">

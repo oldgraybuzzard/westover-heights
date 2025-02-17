@@ -1,7 +1,7 @@
 import React from 'react';
 import { GetServerSideProps } from 'next';
 import { Notification } from '@/types';
-import { useNotifications } from '@/context/NotificationContext';
+import { useNotification } from '@/contexts/NotificationContext';
 import api from '@/lib/api';
 
 interface NotificationHistoryProps {
@@ -18,7 +18,7 @@ const NotificationHistory: React.FC<NotificationHistoryProps> = ({
   const [totalPages, setTotalPages] = React.useState(initialTotalPages);
   const [loading, setLoading] = React.useState(false);
   const [filter, setFilter] = React.useState<'all' | 'unread' | 'read'>('all');
-  const { markAsRead, clearNotification } = useNotifications();
+  const { markAsRead, clearNotification } = useNotification();
 
   const loadNotifications = async (page: number) => {
     setLoading(true);

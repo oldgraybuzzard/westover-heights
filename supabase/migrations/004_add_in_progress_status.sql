@@ -1,0 +1,2 @@
+-- Add IN_PROGRESS to topic_status enum
+ALTER TYPE topic_status ADD VALUE IF NOT EXISTS 'IN_PROGRESS' BEFORE 'ANSWERED'; 

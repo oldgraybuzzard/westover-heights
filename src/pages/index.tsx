@@ -35,27 +35,26 @@ const HomePage: React.FC = () => {
             priority
             quality={90}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/50" />
         </div>
 
         {/* Hero Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 text-white">
-          <div className="text-xl text-primary-100 mb-2">
+          <div className="text-4xl text-primary-100 mb-2">
             Support You Can Trust, Relief You Deserve
           </div>
           <h1 className="text-5xl font-bold mb-6">
             Expert Care for Herpes Management
           </h1>
-          <p className="text-xl mb-8 max-w-2xl">
+          <p className="text-xl mb-8 max-w-2xl font-semibold">
             Empower Yourself—Get the Guidance You Need. With over 35 years of specialized
             experience, we provide comprehensive care, testing, and consultation services
             for herpes and other STIs.
           </p>
           <div className="flex gap-4">
-            <Link href="/western-blot" className="btn-primary">
+            <Link href="/western-blot" className="btn-primary bg-white text-primary-500">
               Get Western Blot Testing
             </Link>
-            <Link href="/forum" className="btn-secondary">
+            <Link href="/forum" className="btn-secondary bg-white text-primary-500">
               Ask a Question
             </Link>
           </div>
@@ -125,68 +124,6 @@ const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Add new Portland STD Care Section */}
-      <div className="mt-16 bg-gray-50 rounded-lg p-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">
-          Need STD Care in Portland, OR?
-        </h2>
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="card hover-lift">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">
-              NW Dermatology Institute
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Comprehensive STI testing and treatment services available with Sheryl Horwitz, NP.
-              All visits are confidential and patients are treated with respect.
-            </p>
-            <ul className="text-gray-600 mb-6 space-y-2">
-              <li>• Complete STI screening and treatment</li>
-              <li>• Herpes consultations and prescriptions</li>
-              <li>• Sexual health counseling</li>
-              <li>• Most insurances accepted</li>
-            </ul>
-            <div className="text-sm text-gray-500">
-              2525 NW Lovejoy St, Suite 400, Portland, OR 97210
-            </div>
-            <a
-              href="https://pdxderm.com/dermatology/sti-diagnosis-and-treatment/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-primary mt-4 inline-block"
-            >
-              Learn More at PDX Derm
-            </a>
-          </div>
-
-          <div className="card hover-lift">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">
-              Synergy Women's Health Care
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Personalized, integrative women's health care in a unique environment.
-              Services provided by Sheryl Horwitz, WHNP and team.
-            </p>
-            <ul className="text-gray-600 mb-6 space-y-2">
-              <li>• Women's health specialists</li>
-              <li>• Comprehensive gynecological care</li>
-              <li>• Personalized treatment plans</li>
-              <li>• Integrative healthcare approach</li>
-            </ul>
-            <div className="text-sm text-gray-500">
-              2525 NW Lovejoy St, Suite 300, Portland, OR 97210
-            </div>
-            <a
-              href="https://synergypdx.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-primary mt-4 inline-block"
-            >
-              Visit Synergy Women's Health
-            </a>
-          </div>
-        </div>
-      </div>
-
       {/* Trust Indicators */}
       <div className="mt-16 text-center">
         <p className="text-gray-500 mb-4">Westover Heights Clinic Excellence</p>
@@ -196,8 +133,6 @@ const HomePage: React.FC = () => {
           <div className="text-gray-600">Specialized Care</div>
         </div>
       </div>
-
-      <AuthContent />
     </main>
   );
 };

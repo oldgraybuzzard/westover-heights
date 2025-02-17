@@ -53,7 +53,7 @@ export async function middleware(request: NextRequest) {
 
 function handleNoSession(request: NextRequest) {
   const loginUrl = new URL('/login', request.url);
-  loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
+  loginUrl.searchParams.set('returnTo', request.nextUrl.pathname);
   return NextResponse.redirect(loginUrl);
 }
 

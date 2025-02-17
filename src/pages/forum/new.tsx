@@ -17,33 +17,69 @@ export default function NewTopicPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && !user) {
+      console.log('No user, redirecting to login');
+      router.push({
+        pathname: '/login',
+        query: { returnTo: '/forum/new' }
+      });
+    }
+  }, [user, router]);
+
+  useEffect(() => {
     async function checkPostingPermission() {
       if (!user) {
-        console.log('No user found, skipping permission check');
+        console.log('No user, skipping check');
         return;
       }
 
       try {
-        console.log('Checking posting permission for user:', user.id);
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('can_post, post_count')
-          .eq('id', user.id)
-          .single();
+        console.log('Starting permission check for user:', user.id);
 
-        if (error) throw error;
+        const [profileResult, topicsResult] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('can_post, post_count')
+            .eq('id', user.id)
+            .single(),
+          supabase
+            .from('topics')
+            .select('id', { count: 'exact' })
+            .eq('author_id', user.id)
+            .eq('status', 'OPEN')
+        ]);
 
-        console.log('Profile data:', profile);
-        setProfile(profile);
-        // Only allow posting if they've paid AND have posts remaining
-        const canPostNow = profile?.can_post && (profile?.post_count ?? 0) < 3;
-        console.log('Can post status:', canPostNow);
+        console.log('Profile result:', profileResult.data);
+        console.log('Topics result:', topicsResult);
 
-        if (!canPostNow) {
-          console.log('User cannot post, showing payment modal');
-          setShowPaymentModal(true);
+        if (profileResult.error) throw profileResult.error;
+        if (topicsResult.error) throw topicsResult.error;
+
+        const hasOpenTopics = (topicsResult.count || 0) > 0;
+        const hasValidPayment = profileResult.data?.can_post === true &&
+          (profileResult.data?.post_count ?? 0) < 3;
+
+        console.log('Has open topics:', hasOpenTopics);
+        console.log('Has valid payment:', hasValidPayment);
+        console.log('Post count:', profileResult.data?.post_count);
+        console.log('Can post:', profileResult.data?.can_post);
+
+        setProfile(profileResult.data);
+
+        if (hasOpenTopics) {
+          toast.error('Please wait for your existing question to be answered before posting a new one');
+          router.push('/forum');
+          return;
         }
-        setCanPost(canPostNow);
+
+        if (!hasValidPayment) {
+          console.log('Showing payment modal');
+          setShowPaymentModal(true);
+          setCanPost(false);
+        } else {
+          console.log('User can post');
+          setCanPost(true);
+        }
       } catch (e) {
         console.error('Error checking posting permission:', e);
         setCanPost(false);
@@ -52,15 +88,10 @@ export default function NewTopicPage() {
     }
 
     checkPostingPermission();
-  }, [user]);
+  }, [user, router]);
 
   if (!user) {
-    console.log('No user, redirecting to login');
-    router.push({
-      pathname: '/login',
-      query: { returnTo: '/forum/new' }
-    });
-    return null;
+    return <div>Loading...</div>;
   }
 
   if (canPost === null) {
@@ -87,27 +118,45 @@ export default function NewTopicPage() {
         throw new Error('Please sign in to create a topic');
       }
 
-      // Start a transaction to create topic and update post count
+      // Log the data we're trying to insert
+      const topicData = {
+        title: formData.get('title'),
+        content: formData.get('content'),
+        category: formData.get('category'),
+        author_id: user.id,
+        status: 'OPEN'
+      };
+      console.log('Submitting topic:', topicData);
+
+      // Create topic
       const { data: topic, error: topicError } = await supabase
         .from('topics')
-        .insert({
-          title: formData.get('title'),
-          content: formData.get('content'),
-          category: formData.get('category'),
-          author_id: user.id,
-          status: 'OPEN'
-        })
+        .insert(topicData)
         .select()
         .single();
 
-      if (topicError) throw topicError;
+      if (topicError) {
+        console.error('Error creating topic:', topicError);
+        throw topicError;
+      }
+
+      console.log('Topic created:', topic);
 
       // Increment post count
-      const { error: updateError } = await supabase.rpc('increment_post_count');
-      if (updateError) throw updateError;
+      const { data: countData, error: updateError } = await supabase.rpc('increment_post_count', {
+        user_id: user.id
+      });
+
+      if (updateError) {
+        console.error('Error incrementing post count:', updateError);
+        throw updateError;
+      }
+
+      console.log('Post count incremented:', countData);
 
       router.push(`/forum/${topic.id}`);
     } catch (e) {
+      console.error('Form submission error:', e);
       setError(e instanceof Error ? e.message : 'An error occurred');
     } finally {
       setLoading(false);
@@ -120,7 +169,7 @@ export default function NewTopicPage() {
       <p className="text-gray-600 mb-4">
         {profile?.post_count >= 3
           ? "You've reached your post limit. A payment of $25 is required for a new question."
-          : "To post questions, a payment of $25 is required. This allows you to post 1 question and 2 follow-up questions."}
+          : "To post questions, a payment of $25 is required. This allows you to post 1 question and 2 follow-up questions. Note: You can only have one open question at a time."}
       </p>
       <button
         onClick={() => setShowPaymentModal(true)}
@@ -133,7 +182,8 @@ export default function NewTopicPage() {
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
         <div className="bg-red-50 text-red-500 p-4 rounded-lg">
-          {error}
+          <p className="font-medium">Error submitting form:</p>
+          <p>{error}</p>
         </div>
       )}
 

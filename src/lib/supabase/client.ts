@@ -120,14 +120,27 @@ export async function getUserReplyCount(topicId: string, userId: string) {
   return replies?.length || 0;
 }
 
-export async function updateCanPost(userId: string) {
-  const { error } = await supabase
-    .from('profiles')
-    .update({ 
-      can_post: true,
-      post_count: 0  // Reset post count after payment
-    })
-    .eq('id', userId);
+export async function updateCanPost(userId: string, paymentIntentId?: string) {
+  const { data: session } = await supabase.auth.getSession();
+  if (!session.session) throw new Error('No session');
+
+  // First create payment history record
+  const { error: historyError } = await supabase
+    .from('payment_history')
+    .insert({
+      user_id: userId,
+      payment_intent_id: paymentIntentId || 'manual',  // Add payment ID
+      amount: 2500,
+      posts_remaining: 3,
+      status: 'active'
+    });
+
+  if (historyError) throw historyError;
+
+  // Then grant posting permission
+  const { error } = await supabase.rpc('grant_posting_permission', {
+    session_id: session.session.access_token
+  });
     
   if (error) throw error;
 }

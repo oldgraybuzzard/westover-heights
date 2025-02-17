@@ -70,13 +70,13 @@ const Footer: React.FC = () => {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact</h3>
             <div className="space-y-2 text-sm text-gray-600">
               <p>Portland, Oregon</p>
-              <a
-                href="mailto:info@westoverheights.com"
+              <Link
+                href="/contact"
                 className="hover:text-primary flex items-center gap-2"
               >
                 <FaEnvelope className="text-primary" />
-                info@westoverheights.com
-              </a>
+                Contact Us
+              </Link>
               <div className="flex gap-4 mt-4">
                 <a
                   href="#"
@@ -101,7 +101,7 @@ const Footer: React.FC = () => {
         <div className="border-t mt-12 pt-8 text-center text-sm text-gray-600">
           <p>© {new Date().getFullYear()} Westover Heights. All rights reserved.</p>
           <div className="mt-2 space-x-4">
-            <Link href="/privacy" className="hover:text-primary">
+            <Link href="/privacy-policy" className="hover:text-primary">
               Privacy Policy
             </Link>
             <Link href="/terms" className="hover:text-primary">

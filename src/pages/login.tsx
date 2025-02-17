@@ -13,41 +13,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { signIn } = useAuth();
-  const returnTo = router.query.returnTo as string || '/';
+  const returnTo = router.query.returnTo as string || '/forum';
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      console.log('Attempting login...');
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      console.log('Login response:', {
-        session: !!data.session,
-        user: data.user?.email
-      });
-
-      // Ensure session is set
-      if (data.session) {
-        console.log('Setting session...');
-        await supabase.auth.setSession(data.session);
-
-        // Check if session was set
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log('Session after set:', !!session);
-
-        toast.success('Welcome back!');
-        router.push(returnTo);
-      }
+      await signIn(email, password);
+      router.push('/'); // Redirect to home after successful login
     } catch (error) {
-      console.error('Login error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to sign in');
+      toast.error('Failed to sign in');
     } finally {
       setLoading(false);
     }

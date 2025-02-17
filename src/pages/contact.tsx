@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { contactFormSchema, type ContactFormData } from '@/lib/validations/contact';
 import { z } from 'zod';
-import { useNotifications } from '@/context/NotificationContext';
+import { useNotification } from '@/contexts/NotificationContext';
 
 type ContactReason = 'consultation' | 'western_blot' | 'forum' | 'other';
 
@@ -18,7 +18,7 @@ interface ContactForm {
 
 const ContactPage: React.FC = () => {
   const router = useRouter();
-  const { showSuccess, showError } = useNotifications();
+  const { showSuccess, showError } = useNotification();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<ContactForm>({
     reason: 'consultation',
@@ -148,8 +148,8 @@ const ContactPage: React.FC = () => {
             >
               <option value="consultation">Private Consultation</option>
               <option value="western_blot">Western Blot Test</option>
-              <option value="forum">Forum Questions</option>
-              <option value="other">Other Services</option>
+              <option value="forum">Forum Concerns</option>
+              <option value="other-services">Other</option>
             </select>
             {errors.reason && (
               <p className="mt-1 text-sm text-red-600">{errors.reason}</p>

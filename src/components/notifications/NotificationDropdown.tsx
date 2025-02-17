@@ -1,10 +1,10 @@
 import React from 'react';
-import { useNotifications } from '@/context/NotificationContext';
+import { useNotification } from '@/contexts/NotificationContext';
 import Link from 'next/link';
 
 const NotificationDropdown: React.FC = () => {
   const [isOpen, setIsOpen] = React.useState(false);
-  const { notifications, unreadCount, markAsRead, markAllAsRead, clearNotification } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, clearNotification } = useNotification();
 
   return (
     <div className="relative">

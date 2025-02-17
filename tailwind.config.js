@@ -7,14 +7,14 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#139A43', // Green
+          DEFAULT: '#558000', // Green
           light: '#B6F2D1',   // Light green
         },
         secondary: {
-          DEFAULT: '#29339B', // Blue
-          light: '#85D1DB',   // Light blue
+          DEFAULT: '#B3EBF2', // Non Photo Blue
+          light: '#EFD3D7 ',   // Misty Rose
         },
-        accent: '#B3EBF2',    // Lightest blue
+        accent: '#FEEAFA',    // Pale Purple Pinks
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in forwards',

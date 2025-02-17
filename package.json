@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "node scripts/seed.js"
+    "seed": "node scripts/seed.mjs"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",
@@ -18,9 +18,11 @@
     "@supabase/auth-helpers-nextjs": "^0.8.7",
     "@supabase/auth-helpers-react": "^0.4.2",
     "@supabase/supabase-js": "^2.39.0",
+    "@types/xlsx": "^0.0.35",
     "axios": "^1.6.7",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
+    "framer-motion": "^12.4.3",
     "next": "^14.1.0",
     "node-mailjet": "^6.0.6",
     "pdfjs-dist": "^4.0.379",
@@ -32,6 +34,7 @@
     "react-pdf": "^7.7.1",
     "recharts": "^2.15.1",
     "stripe": "^17.6.0",
+    "xlsx-js-style": "^1.2.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
