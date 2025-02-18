@@ -23,12 +23,14 @@ export type Profile = {
   email_visible: boolean;
   created_at: string;
   updated_at: string;
+  encrypted_email?: string;
 };
 
 export type Topic = {
   id: string;
   title: string;
   content: string;
+  encrypted_content?: string;
   author_id: string;
   status: 'OPEN' | 'ANSWERED' | 'CLOSED';
   category: string;
@@ -45,6 +47,55 @@ export type Reply = {
   created_at: string;
   updated_at: string;
   author?: Profile;
+};
+
+// Update existing types and add new ones for encrypted data
+
+export type EncryptedProfile = {
+  id: string;
+  display_name: string;
+  role: 'USER' | 'EXPERT' | 'ADMIN';
+  email_visible: boolean;
+  created_at: string;
+  updated_at: string;
+  encrypted_email?: string;
+};
+
+export type EncryptedReply = {
+  id: string;
+  content: string;
+  encrypted_content: string;
+  decrypted_content?: string;
+  author_id: string;
+  topic_id: string;
+  created_at: string;
+  updated_at: string;
+  author?: {
+    id: string;
+    display_name: string;
+    roles: string[];
+    created_at: string;
+    updated_at: string;
+    email_visible: boolean;
+  };
+};
+
+export type EncryptedTopic = {
+  id: string;
+  title: string;
+  content: string;
+  encrypted_content: string;
+  decrypted_content?: string;
+  author_id: string;
+  status: 'OPEN' | 'ANSWERED' | 'CLOSED';
+  category: string;
+  created_at: string;
+  updated_at: string;
+  author?: EncryptedProfile;
+  replies?: EncryptedReply[];
+  expert_response_id?: string;
+  assigned_expert_id?: string;
+  answered_at?: string;
 };
 
 // Add realtime subscription for role changes
@@ -143,4 +194,50 @@ export async function updateCanPost(userId: string, paymentIntentId?: string) {
   });
     
   if (error) throw error;
+}
+
+export async function encryptEmail(email: string) {
+  const { data, error } = await supabase
+    .rpc('encrypt_email', { p_email: email })
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function encryptContent(content: string) {
+  const { data, error } = await supabase
+    .rpc('encrypt_content', { p_content: content })
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+// Update the fetch functions to use decrypted views
+export async function fetchTopic(topicId: string) {
+  const { data, error } = await supabase
+    .from('decrypted_topics')
+    .select(`
+      *,
+      author:profiles(*)
+    `)
+    .eq('id', topicId)
+    .single();
+
+  if (error) throw error;
+  return data as EncryptedTopic;
+}
+
+export async function fetchTopics() {
+  const { data, error } = await supabase
+    .from('decrypted_topics')
+    .select(`
+      *,
+      author:profiles(*)
+    `)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data as EncryptedTopic[];
 }
