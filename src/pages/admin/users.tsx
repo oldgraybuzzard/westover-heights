@@ -8,6 +8,7 @@ import { toast } from 'react-hot-toast';
 import UserBadge from '@/components/UserBadge';
 import { useRouter } from 'next/router';
 import { format, parseISO } from 'date-fns';
+import PasswordResetButton from '@/components/admin/PasswordResetButton';
 
 interface Profile {
   id: string;
@@ -674,6 +675,7 @@ export default function AdminUsersPage() {
                     >
                       Delete
                     </button>
+                    <PasswordResetButton userId={user.id} userEmail={user.email} />
                   </td>
                 </tr>
               ))}

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { FaArrowLeft, FaDownload, FaTrash } from 'react-icons/fa';
 import { useRouter } from 'next/router';
 import { toast } from 'react-hot-toast';
+import PasswordChangeForm from '@/components/auth/PasswordChangeForm';
 
 export default function AccountSettings() {
   const { user, signOut } = useAuth();
@@ -138,6 +139,8 @@ export default function AccountSettings() {
     }
   };
 
+  if (!user) return null;
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-12 pt-16">
       <div className="flex items-center gap-4 mb-8">
@@ -149,6 +152,12 @@ export default function AccountSettings() {
       <h1 className="text-2xl font-bold mb-6">Account Settings</h1>
 
       <div className="space-y-6">
+        {/* Password Change Section */}
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <h2 className="text-lg font-semibold mb-4">Change Password</h2>
+          <PasswordChangeForm />
+        </div>
+
         {/* Download Data Section */}
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex justify-between items-center">
