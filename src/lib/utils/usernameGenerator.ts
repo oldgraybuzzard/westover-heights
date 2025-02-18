@@ -22,4 +22,10 @@ export async function generateUniqueUsername(base: string): Promise<string> {
     username = `${sanitized}${counter}`;
     counter++;
   }
-} 
+}
+
+export const generateUsername = async (): Promise<string> => {
+  const prefix = 'user';
+  const randomNum = Math.floor(Math.random() * 10000);
+  return `${prefix}${randomNum}`;
+}; 

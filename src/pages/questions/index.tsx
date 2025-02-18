@@ -104,8 +104,8 @@ export const getServerSideProps: GetServerSideProps = async () => {
         isAnonymous: true,
         status: 'pending',
         followUpCount: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
       // Add more sample questions as needed
     ];

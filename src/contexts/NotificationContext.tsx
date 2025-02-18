@@ -6,11 +6,12 @@ type NotificationType = 'success' | 'error' | 'info';
 
 interface Notification {
   id: string;
-  title: string;
+  type: NotificationType;
   message: string;
   read: boolean;
-  link?: string;
   createdAt: string;
+  title?: string;
+  link?: string;
 }
 
 export interface NotificationContextType {
@@ -19,7 +20,7 @@ export interface NotificationContextType {
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   clearNotification: (id: string) => void;
-  showNotification: (type: string, message: string) => void;
+  showNotification: (type: NotificationType, message: string) => void;
   showSuccess: (message: string) => void;
   showError: (message: string) => void;
 }
@@ -40,7 +41,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const showNotification = (type: NotificationType, message: string) => {
     const id = Math.random().toString(36).substring(7);
-    setNotifications(prev => [...prev, { id, type, message, read: false, createdAt: new Date().toISOString() }]);
+    setNotifications(prev => [...prev, {
+      id,
+      type,
+      message,
+      read: false,
+      createdAt: new Date().toISOString(),
+      title: type.charAt(0).toUpperCase() + type.slice(1)
+    }]);
 
     // Auto remove after 5 seconds
     setTimeout(() => {

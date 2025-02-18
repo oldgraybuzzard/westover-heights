@@ -45,4 +45,17 @@ export interface ExpertDashboardTopic {
   author_name: string;
   author_id: string;
   reply_count: number;
+}
+
+interface ExpertTopic {
+  topic_id: string;
+  title: string;
+  content: string;
+  created_at: string;
+  answered_at: string | null;
+  author_name: string;
+  author_id: string;
+  reply_count: number;
+  status: 'new' | 'in_progress' | 'answered';
+  assigned_expert_id: string | null | undefined;
 } 

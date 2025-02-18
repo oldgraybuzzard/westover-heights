@@ -9,7 +9,8 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (paymentIntentId: string) => Promise<void>;
+  mode: 'renewal' | 'new';
 }
 
 export default function PaymentModal({ isOpen, onClose, onSuccess }: PaymentModalProps) {
@@ -42,7 +43,11 @@ export default function PaymentModal({ isOpen, onClose, onSuccess }: PaymentModa
           </div>
 
           <Elements stripe={stripePromise}>
-            <PaymentForm onSuccess={onSuccess} />
+            <PaymentForm
+              amount={25}
+              onPaymentSuccess={onSuccess}
+              onPaymentError={(error) => console.error(error)}
+            />
           </Elements>
         </Dialog.Panel>
       </div>

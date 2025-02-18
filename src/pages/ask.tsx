@@ -1,8 +1,8 @@
 import React from 'react';
 import { useRouter } from 'next/router';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import RichTextEditor from '@/components/questions/RichTextEditor';
-import PaymentForm from '@/components/payment/PaymentForm';
+import PaymentForm from '@/components/PaymentForm';
 import api from '@/lib/api';
 
 const AskQuestionPage: React.FC = () => {

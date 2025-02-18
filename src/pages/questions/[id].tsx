@@ -2,7 +2,7 @@ import React from 'react';
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { Question, Answer } from '@/types';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 
 interface QuestionDetailPageProps {
@@ -45,11 +45,10 @@ const QuestionDetailPage: React.FC<QuestionDetailPageProps> = ({ question, answe
         <h1 className="text-2xl font-bold text-gray-900 mb-4">{question.title}</h1>
         <div className="prose max-w-none mb-6">{question.content}</div>
         <div className="flex justify-between items-center text-sm text-gray-500">
-          <span className={`px-2 py-1 rounded-full ${
-            question.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-            question.status === 'answered' ? 'bg-green-100 text-green-800' :
-            'bg-gray-100 text-gray-800'
-          }`}>
+          <span className={`px-2 py-1 rounded-full ${question.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+              question.status === 'answered' ? 'bg-green-100 text-green-800' :
+                'bg-gray-100 text-gray-800'
+            }`}>
             {question.status.charAt(0).toUpperCase() + question.status.slice(1)}
           </span>
           <span>{new Date(question.createdAt).toLocaleDateString()}</span>
@@ -103,8 +102,8 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
       isAnonymous: true,
       status: 'pending',
       followUpCount: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     const answers: Answer[] = [];

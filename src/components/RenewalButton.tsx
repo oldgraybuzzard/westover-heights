@@ -35,7 +35,7 @@ export default function RenewalButton({ expiryDate }: RenewalButtonProps) {
       <PaymentModal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
-        onSuccess={() => {
+        onSuccess={async (paymentIntentId: string) => {
           setShowPaymentModal(false);
         }}
         mode="renewal"

@@ -36,11 +36,11 @@ const TrendsChart: React.FC<TrendsChartProps> = ({ data, metric }) => {
     }
   };
 
-  const formatYAxis = (value: number) => {
+  const formatYAxis = (value: number): string => {
     if (metric === 'revenue') {
       return `$${value}`;
     }
-    return value;
+    return value.toString();
   };
 
   return (
@@ -55,7 +55,7 @@ const TrendsChart: React.FC<TrendsChartProps> = ({ data, metric }) => {
             <XAxis dataKey="date" />
             <YAxis tickFormatter={formatYAxis} />
             <Tooltip
-              formatter={(value: number) => 
+              formatter={(value: number) =>
                 metric === 'revenue' ? `$${value}` : value
               }
             />

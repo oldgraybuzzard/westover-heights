@@ -98,8 +98,14 @@ export default function UserHistoryPage() {
 
       setHistory({
         profile,
-        topics: topics || [],
-        replies: replies || []
+        topics: (topics || []).map(topic => ({
+          ...topic,
+          reply_count: topic.reply_count[0]?.count || 0
+        })),
+        replies: (replies || []).map(reply => ({
+          ...reply,
+          topic: reply.topic[0] || { id: '', title: '' }
+        }))
       });
     } catch (error) {
       console.error('Error fetching user history:', error);

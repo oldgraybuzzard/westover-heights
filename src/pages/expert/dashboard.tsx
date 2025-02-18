@@ -107,7 +107,7 @@ export default function ExpertDashboard() {
 
       setTopics(topics.map(topic =>
         topic.topic_id === topicId
-          ? { ...topic, status: 'in_progress', assigned_expert_id: user?.id }
+          ? { ...topic, status: 'in_progress', assigned_expert_id: user?.id ?? null }
           : topic
       ));
       toast.success('Topic assigned to you');

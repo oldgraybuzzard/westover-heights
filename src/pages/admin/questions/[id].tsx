@@ -2,7 +2,7 @@ import React from 'react';
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { Question, Answer } from '@/types';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import QuestionResponse from '@/components/admin/QuestionResponse';
 import api from '@/lib/api';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
@@ -43,11 +43,10 @@ const AdminQuestionDetail: React.FC<AdminQuestionDetailProps> = ({
       <div className="bg-white p-6 rounded-lg shadow-md mb-8">
         <div className="flex justify-between items-start mb-4">
           <h1 className="text-2xl font-bold text-gray-900">{question.title}</h1>
-          <span className={`px-3 py-1 rounded-full text-sm ${
-            question.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+          <span className={`px-3 py-1 rounded-full text-sm ${question.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
             question.status === 'answered' ? 'bg-green-100 text-green-800' :
-            'bg-gray-100 text-gray-800'
-          }`}>
+              'bg-gray-100 text-gray-800'
+            }`}>
             {question.status.charAt(0).toUpperCase() + question.status.slice(1)}
           </span>
         </div>
@@ -117,8 +116,8 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
       isAnonymous: true,
       status: 'pending',
       followUpCount: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     const answers: Answer[] = [];

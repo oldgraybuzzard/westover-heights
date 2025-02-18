@@ -3,11 +3,13 @@ import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'react-hot-toast';
 
-type PaymentFormProps = {
-  onSuccess?: () => void;
-};
+interface PaymentFormProps {
+  amount: number;
+  onPaymentSuccess: (paymentIntentId: string) => Promise<void>;
+  onPaymentError: (error: string) => void;
+}
 
-export default function PaymentForm({ onSuccess }: PaymentFormProps) {
+export default function PaymentForm({ amount, onPaymentSuccess, onPaymentError }: PaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
@@ -83,15 +85,16 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
           setCanPost(true);
           setShowPaymentModal(false);
           toast.success('You can now post your question!');
+          onPaymentSuccess(result.paymentIntent.id);
         }
       }
 
       toast.success('Payment successful! You can now post questions.');
-      onSuccess?.();
     } catch (error) {
       console.error('Payment failed:', error);
       setError(error instanceof Error ? error.message : 'Payment failed');
       toast.error(error instanceof Error ? error.message : 'Payment failed');
+      onPaymentError(error instanceof Error ? error.message : 'Payment failed');
     } finally {
       setLoading(false);
     }

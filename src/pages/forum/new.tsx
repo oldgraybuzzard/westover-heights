@@ -265,6 +265,7 @@ export default function NewTopicPage() {
             toast.success('You can now post your question!');
           }
         }}
+        mode="new"
       />
     </div>
   );

@@ -5,7 +5,7 @@ export class ForumService {
   static async getTopics(
     page: number = 1,
     category?: string,
-    status?: 'OPEN' | 'ANSWERED' | 'CLOSED'
+    status?: 'OPEN' | 'ANSWERED' | 'CLOSED' | 'all'
   ) {
     const pageSize = 20;
     const start = (page - 1) * pageSize;

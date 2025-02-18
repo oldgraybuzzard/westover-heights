@@ -30,7 +30,7 @@ export interface UserProfile extends User {
   questionsCount: number;
   lastActive: string;
   status: 'active' | 'suspended' | 'deleted';
-  createdAt: string;
+  createdAt: Date;
   updatedAt: string;
 }
 

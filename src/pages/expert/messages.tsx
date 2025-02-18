@@ -7,6 +7,7 @@ import { Message } from '@/types/expert';
 import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 
 interface MessageWithUser extends Message {
   sender: {
@@ -19,6 +20,7 @@ interface MessageWithUser extends Message {
 
 export default function Messages() {
   const { user, isExpert } = useAuth();
+  const router = useRouter();
   const [messages, setMessages] = useState<MessageWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [showComposeModal, setShowComposeModal] = useState(false);

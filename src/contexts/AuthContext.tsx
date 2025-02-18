@@ -3,11 +3,13 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/client';
 import { UserRole } from '@/types/user';
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   userRoles: UserRole[];
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   isAdmin: () => boolean;
   isExpert: () => boolean;
@@ -56,6 +58,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAdmin = () => userRoles.includes('ADMIN');
   const isExpert = () => userRoles.includes('EXPERT');
 
+  const signUp = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    if (error) throw error;
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -68,12 +78,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         if (error) throw error;
       },
+      signUp,
       signOut: async () => {
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
       },
       isAdmin,
       isExpert,
+      register: async (email: string, password: string) => {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        if (error) throw error;
+      },
     }}>
       {children}
     </AuthContext.Provider>

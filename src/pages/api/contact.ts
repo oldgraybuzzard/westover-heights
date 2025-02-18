@@ -3,6 +3,10 @@ import { contactFormSchema } from '@/lib/validations/contact';
 import Mailjet from 'node-mailjet';
 import rateLimit from 'express-rate-limit';
 
+interface MailjetError {
+  response: { data: unknown };
+}
+
 if (!process.env.MAILJET_API_KEY || !process.env.MAILJET_SECRET_KEY) {
   throw new Error('Mailjet credentials are not set in environment variables');
 }
@@ -83,8 +87,9 @@ const sendEmail = async (data: {
     return response;
   } catch (error) {
     console.error('Mailjet error:', error);
-    if (error.response) {
-      console.error('Mailjet error response:', error.response.data);
+    if (error && typeof error === 'object' && 'response' in error) {
+      const mailjetError = error as MailjetError;
+      console.error('Mailjet error response:', mailjetError.response.data);
     }
     throw error;
   }
