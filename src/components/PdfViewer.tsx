@@ -1,48 +1,78 @@
-import { useState } from 'react';
-import { Viewer, Worker, LoadError } from '@react-pdf-viewer/core';
-import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
+import React, { useEffect, useState } from 'react';
+import { FaDownload, FaEye } from 'react-icons/fa';
 
-// Import styles
-import '@react-pdf-viewer/core/lib/styles/index.css';
-import '@react-pdf-viewer/default-layout/lib/styles/index.css';
-
-interface PDFViewerProps {
+interface PdfViewerProps {
   pdfUrl: string;
-  title: string;
+  title?: string;
 }
 
-const PDFViewer = ({ pdfUrl, title }: PDFViewerProps) => {
-  const defaultLayoutPluginInstance = defaultLayoutPlugin();
+const PdfViewer: React.FC<PdfViewerProps> = ({ pdfUrl, title }) => {
+  const [needsViewOption, setNeedsViewOption] = useState(false);
+
+  useEffect(() => {
+    // Check if browser supports download attribute
+    const link = document.createElement('a');
+    setNeedsViewOption(!('download' in link));
+  }, []);
+
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(pdfUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = title || 'document.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download failed:', error);
+      window.open(pdfUrl, '_blank');
+    }
+  };
 
   return (
-    <div className="bg-gray-50 rounded-lg p-4">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold">{title}</h3>
-      </div>
-
-      <div className="h-[600px] border rounded-lg overflow-hidden">
-        <Worker workerUrl="/pdf-worker/pdf.worker.min.js">
-          <Viewer
-            fileUrl={pdfUrl}
-            plugins={[defaultLayoutPluginInstance]}
-            defaultScale={1}
-            renderError={(error: LoadError) => (
-              <div className="text-center py-4 text-red-500">
-                <p>Failed to load PDF. Please try downloading instead.</p>
+    <div className="space-y-4">
+      {title && (
+        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+      )}
+      <div className="w-full h-[600px] relative border border-gray-200 rounded-lg">
+        <object
+          data={pdfUrl}
+          type="application/pdf"
+          className="w-full h-full rounded-lg"
+        >
+          <div className="flex flex-col items-center justify-center p-8 bg-gray-50 rounded-lg h-full">
+            <p className="text-gray-600 mb-4 text-center">
+              Unable to display PDF directly.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleDownload}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition-colors"
+              >
+                <FaDownload />
+                Download PDF
+              </button>
+              {needsViewOption && (
                 <a
                   href={pdfUrl}
-                  download
-                  className="mt-2 inline-block text-primary hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2 bg-secondary text-white rounded hover:bg-secondary-dark transition-colors"
                 >
-                  Download PDF
+                  <FaEye />
+                  View PDF
                 </a>
-              </div>
-            )}
-          />
-        </Worker>
+              )}
+            </div>
+          </div>
+        </object>
       </div>
     </div>
   );
 };
 
-export default PDFViewer; 
+export default PdfViewer; 

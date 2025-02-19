@@ -8,7 +8,7 @@ module.exports = {
       colors: {
         primary: {
           DEFAULT: '#558000', // Green
-          light: '#B6F2D1',   // Light green
+          light: '#D8D6DA',   // 
         },
         secondary: {
           DEFAULT: '#B3EBF2', // Non Photo Blue
