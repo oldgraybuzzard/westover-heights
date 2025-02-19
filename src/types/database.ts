@@ -1,0 +1,1 @@
+export type UserRole = 'PARTICIPANT' | 'EXPERT' | 'ADMIN'; 

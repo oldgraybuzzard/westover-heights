@@ -4,6 +4,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import RichTextEditor from '@/components/questions/RichTextEditor';
 import PaymentForm from '@/components/PaymentForm';
 import api from '@/lib/api';
+import { updateCanPost } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
+import { toast } from 'react-hot-toast';
 
 const AskQuestionPage: React.FC = () => {
   const router = useRouter();
@@ -13,6 +16,7 @@ const AskQuestionPage: React.FC = () => {
   const [isAnonymous, setIsAnonymous] = React.useState(true);
   const [showPayment, setShowPayment] = React.useState(false);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
+  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!user) {
@@ -40,31 +44,79 @@ const AskQuestionPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
+    try {
+      // First check if user can post
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('can_post, post_count')
+        .single();
 
-    setShowPayment(true);
+      if (profileError) throw profileError;
+      if (!profile.can_post) {
+        toast.error('You need to purchase credits to post a question');
+        return;
+      }
+
+      // Create the topic
+      const { data: topic, error: topicError } = await supabase
+        .from('topics')
+        .insert({
+          title: title.trim(),
+          content: content.trim(),
+          encrypted_content: content.trim(),
+          author_id: user?.id,
+          status: 'PENDING',
+          category: selectedCategory || 'GENERAL'
+        })
+        .select()
+        .single();
+
+      if (topicError) {
+        console.error('Topic creation error:', topicError);
+        throw topicError;
+      }
+
+      toast.success('Question posted successfully!');
+      router.push(`/questions/${topic.id}`);
+    } catch (error) {
+      console.error('Form submission error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to post question');
+    }
   };
 
   const handlePaymentSuccess = async (paymentIntentId: string) => {
     try {
-      const response = await api.post('/api/questions', {
-        title,
-        content,
-        isAnonymous,
-        paymentIntentId,
-      });
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
 
-      router.push(`/questions/${response.data.id}`);
+      // Use the updateCanPost function from supabase client
+      await updateCanPost(user.id, paymentIntentId);
+
+      // Create the topic
+      const { data: topic, error: topicError } = await supabase
+        .from('topics')
+        .insert({
+          title,
+          content,
+          author_id: user.id,
+          is_anonymous: isAnonymous,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (topicError) throw topicError;
+
+      router.push(`/questions/${topic.id}`);
     } catch (error) {
       console.error('Failed to create question:', error);
       setErrors({ submit: 'Failed to create question. Please try again.' });
     }
   };
 
-  const handlePaymentError = (error: string) => {
-    setErrors({ payment: error });
+  const handlePaymentError = (error: Error) => {
+    setErrors(prev => ({ ...prev, payment: error.message }));
   };
 
   if (!user) {

@@ -9,6 +9,8 @@ import UserBadge from '@/components/UserBadge';
 import { useRouter } from 'next/router';
 import { format, parseISO } from 'date-fns';
 import PasswordResetButton from '@/components/admin/PasswordResetButton';
+import PaymentHistory from '@/components/admin/PaymentHistory';
+import React from 'react';
 
 interface Profile {
   id: string;
@@ -91,6 +93,7 @@ export default function AdminUsersPage() {
   const [customPresets, setCustomPresets] = useState<FilterPreset[]>([]);
   const [showEditPresetModal, setShowEditPresetModal] = useState(false);
   const [editPresetForm, setEditPresetForm] = useState<EditPresetForm | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const dateRangePresets: Record<DateRangePreset, { from: Date; to: Date }> = {
     today: {
@@ -471,213 +474,120 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Manage Users</h1>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
-        >
-          Create User
-        </button>
-      </div>
+    <div className="container max-w-[95%] mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">Manage Users</h1>
 
-      {/* Search, Filter, and Bulk Actions */}
-      <div className="mb-4 space-y-4">
-        <div className="flex space-x-4">
-          <input
-            type="text"
-            placeholder="Search by email or name..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="form-input w-64"
-          />
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value as UserRole | 'ALL')}
-            className="form-select"
-          >
-            <option value="ALL">All Roles</option>
-            <option value="PARTICIPANT">Participants</option>
-            <option value="EXPERT">Experts</option>
-            <option value="ADMIN">Admins</option>
-          </select>
-        </div>
-
-        {/* Bulk Actions */}
-        <div className="flex items-center space-x-4">
-          <select
-            disabled={selectedUsers.length === 0}
-            onChange={(e) => handleBulkAction(e.target.value)}
-            className="form-select"
-            value=""
-          >
-            <option value="">Bulk Actions</option>
-            <option value="delete">Delete Selected</option>
-            <option value="role_PARTICIPANT">Make Participants</option>
-            <option value="role_EXPERT">Make Experts</option>
-            <option value="role_ADMIN">Make Admins</option>
-          </select>
-          <span className="text-sm text-gray-600">
-            {selectedUsers.length} users selected
-          </span>
-        </div>
-      </div>
-
-      {/* Advanced Filters */}
-      <div className="grid grid-cols-2 gap-4 mt-2">
-        <div>
-          <label className="block text-sm font-medium mb-1">Posts Range</label>
-          <div className="flex space-x-2">
-            <input
-              type="number"
-              placeholder="Min"
-              value={filters.minPosts}
-              onChange={e => setFilters(f => ({ ...f, minPosts: e.target.value }))}
-              className="form-input w-24"
-            />
-            <span className="self-center">-</span>
-            <input
-              type="number"
-              placeholder="Max"
-              value={filters.maxPosts}
-              onChange={e => setFilters(f => ({ ...f, maxPosts: e.target.value }))}
-              className="form-input w-24"
-            />
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Date Range</label>
-          <div className="flex space-x-2">
-            <select
-              onChange={(e) => applyDateRangePreset(e.target.value as DateRangePreset)}
-              className="form-select"
-              value="custom"
-            >
-              <option value="custom">Custom Range</option>
-              <option value="today">Today</option>
-              <option value="thisWeek">This Week</option>
-              <option value="thisMonth">This Month</option>
-              <option value="thisYear">This Year</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* User Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <table className="min-w-full">
-          <thead>
-            <tr className="border-b">
-              <th className="px-6 py-3 w-8">
-                <input
-                  type="checkbox"
-                  onChange={(e) => {
-                    setSelectedUsers(e.target.checked ? users.map(u => u.id) : []);
-                  }}
-                  checked={selectedUsers.length === users.length}
-                  className="form-checkbox"
-                />
+      <div className="bg-white shadow-sm rounded-lg overflow-x-auto">
+        <table className="min-w-full table-fixed divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="w-[15%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Email
               </th>
-              {/* Sortable Headers */}
-              {['email', 'display_name', 'post_count', 'created_at'].map((field) => (
-                <th
-                  key={field}
-                  className="px-6 py-3 text-left cursor-pointer hover:bg-gray-50"
-                  onClick={() => {
-                    if (sortField === field) {
-                      setSortDirection(d => d === 'asc' ? 'desc' : 'asc');
-                    } else {
-                      setSortField(field as keyof User);
-                      setSortDirection('asc');
-                    }
-                  }}
-                >
-                  {field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                  {sortField === field && (sortDirection === 'asc' ? ' ↑' : ' ↓')}
-                </th>
-              ))}
-              <th className="px-6 py-3 text-left">Actions</th>
+              <th className="w-[15%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Display Name
+              </th>
+              <th className="w-[10%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Roles
+              </th>
+              <th className="w-[8%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Posts
+              </th>
+              <th className="w-[12%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Created
+              </th>
+              <th className="w-[15%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Payment History
+              </th>
+              <th className="w-[25%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="bg-white divide-y divide-gray-200">
             {getSortedAndFilteredUsers()
               .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
-              .map(user => (
-                <tr key={user.id} className="border-b">
-                  <td className="px-6 py-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedUsers.includes(user.id)}
-                      onChange={(e) => {
-                        setSelectedUsers(prev =>
-                          e.target.checked
-                            ? [...prev, user.id]
-                            : prev.filter(id => id !== user.id)
-                        );
-                      }}
-                      className="form-checkbox"
-                    />
-                  </td>
-                  <td className="px-6 py-4">{user.email}</td>
-                  <td className="px-6 py-4">
-                    {editForm?.id === user.id ? (
-                      <form onSubmit={updateDisplayName} className="flex space-x-2">
-                        <input
-                          type="text"
-                          value={editForm.display_name}
-                          onChange={e => setEditForm({ ...editForm, display_name: e.target.value })}
-                          className="form-input w-32"
-                          required
+              .map((user) => (
+                <React.Fragment key={user.id}>
+                  <tr>
+                    <td className="px-6 py-4">{user.email}</td>
+                    <td className="px-6 py-4">
+                      {editForm?.id === user.id ? (
+                        <form onSubmit={updateDisplayName} className="flex space-x-2">
+                          <input
+                            type="text"
+                            value={editForm.display_name}
+                            onChange={e => setEditForm({ ...editForm, display_name: e.target.value })}
+                            className="form-input w-32"
+                            required
+                          />
+                          <button
+                            type="submit"
+                            className="text-primary hover:text-primary/80"
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditForm(null)}
+                            className="text-gray-500 hover:text-gray-700"
+                          >
+                            Cancel
+                          </button>
+                        </form>
+                      ) : (
+                        <div className="flex items-center space-x-2">
+                          <span>{user.display_name}</span>
+                          <button
+                            onClick={() => setEditForm({ id: user.id, display_name: user.display_name })}
+                            className="text-gray-400 hover:text-gray-600"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">{user.roles.join(', ')}</td>
+                    <td className="px-6 py-4">{user.post_count}</td>
+                    <td className="px-6 py-4">{formatDate(user.created_at)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <button
+                        onClick={() => setSelectedUserId(selectedUserId === user.id ? null : user.id)}
+                        className="text-primary hover:text-primary-dark"
+                      >
+                        {selectedUserId === user.id ? 'Hide History' : 'View History'}
+                      </button>
+                    </td>
+                    <td className="px-6 py-4 space-x-2">
+                      <select
+                        value={user.roles[0]}
+                        onChange={(e) => updateUserRole(user.id, e.target.value as UserRole)}
+                        className="form-select"
+                      >
+                        <option value="PARTICIPANT">Participant</option>
+                        <option value="EXPERT">Expert</option>
+                        <option value="ADMIN">Admin</option>
+                      </select>
+                      <button
+                        onClick={() => deleteUser(user.id)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        Delete
+                      </button>
+                      <PasswordResetButton userId={user.id} userEmail={user.email} />
+                    </td>
+                  </tr>
+                  {selectedUserId === user.id && (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-4 bg-gray-50">
+                        <PaymentHistory
+                          userId={user.id}
+                          onUpdate={fetchUsers}
                         />
-                        <button
-                          type="submit"
-                          className="text-primary hover:text-primary/80"
-                        >
-                          Save
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditForm(null)}
-                          className="text-gray-500 hover:text-gray-700"
-                        >
-                          Cancel
-                        </button>
-                      </form>
-                    ) : (
-                      <div className="flex items-center space-x-2">
-                        <span>{user.display_name}</span>
-                        <button
-                          onClick={() => setEditForm({ id: user.id, display_name: user.display_name })}
-                          className="text-gray-400 hover:text-gray-600"
-                        >
-                          Edit
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">{user.roles.join(', ')}</td>
-                  <td className="px-6 py-4">{user.post_count}</td>
-                  <td className="px-6 py-4">{formatDate(user.created_at)}</td>
-                  <td className="px-6 py-4 space-x-2">
-                    <select
-                      value={user.roles[0]}
-                      onChange={(e) => updateUserRole(user.id, e.target.value as UserRole)}
-                      className="form-select"
-                    >
-                      <option value="PARTICIPANT">Participant</option>
-                      <option value="EXPERT">Expert</option>
-                      <option value="ADMIN">Admin</option>
-                    </select>
-                    <button
-                      onClick={() => deleteUser(user.id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      Delete
-                    </button>
-                    <PasswordResetButton userId={user.id} userEmail={user.email} />
-                  </td>
-                </tr>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
           </tbody>
         </table>

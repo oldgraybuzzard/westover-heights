@@ -110,51 +110,26 @@ export default function NewTopicPage() {
     setLoading(true);
     setError(null);
 
-    const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
-
     try {
       if (!user) {
         throw new Error('Please sign in to create a topic');
       }
 
-      // Log the data we're trying to insert
-      const topicData = {
-        title: formData.get('title'),
-        content: formData.get('content'),
-        category: formData.get('category'),
-        author_id: user.id,
-        status: 'OPEN'
-      };
-      console.log('Submitting topic:', topicData);
+      const form = e.target as HTMLFormElement;
+      const formData = new FormData(form);
 
-      // Create topic
+      // Use the create_topic function
       const { data: topic, error: topicError } = await supabase
-        .from('topics')
-        .insert(topicData)
-        .select()
-        .single();
+        .rpc('create_topic', {
+          p_title: formData.get('title'),
+          p_content: formData.get('content'),
+          p_category: formData.get('category') || 'GENERAL',
+          p_author_id: user.id
+        });
 
-      if (topicError) {
-        console.error('Error creating topic:', topicError);
-        throw topicError;
-      }
+      if (topicError) throw topicError;
 
-      console.log('Topic created:', topic);
-
-      // Increment post count
-      const { data: countData, error: updateError } = await supabase.rpc('increment_post_count', {
-        user_id: user.id
-      });
-
-      if (updateError) {
-        console.error('Error incrementing post count:', updateError);
-        throw updateError;
-      }
-
-      console.log('Post count incremented:', countData);
-
-      router.push(`/forum/${topic.id}`);
+      router.push(`/forum/${topic}`);
     } catch (e) {
       console.error('Form submission error:', e);
       setError(e instanceof Error ? e.message : 'An error occurred');
@@ -257,9 +232,9 @@ export default function NewTopicPage() {
       <PaymentModal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
-        onSuccess={async () => {
+        onSuccess={async (paymentIntentId) => {
           if (user) {
-            await updateCanPost(user.id);
+            await updateCanPost(user.id, paymentIntentId);
             setCanPost(true);
             setShowPaymentModal(false);
             toast.success('You can now post your question!');

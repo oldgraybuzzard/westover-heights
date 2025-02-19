@@ -1,5 +1,6 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { Database } from '@/types/supabase';
+import { UserRole } from '@/types/database';
 
 // Add a simple delay function
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -19,11 +20,15 @@ export const supabase = createClientComponentClient<Database>({
 export type Profile = {
   id: string;
   display_name: string;
-  role: 'USER' | 'EXPERT' | 'ADMIN';
+  role: UserRole;
+  roles: UserRole[];
   email_visible: boolean;
   created_at: string;
   updated_at: string;
   encrypted_email?: string;
+  email?: string;
+  can_post: boolean;
+  post_count: number;
 };
 
 export type Topic = {
@@ -180,7 +185,7 @@ export async function updateCanPost(userId: string, paymentIntentId?: string) {
     .from('payment_history')
     .insert({
       user_id: userId,
-      payment_intent_id: paymentIntentId || 'manual',  // Add payment ID
+      payment_intent_id: paymentIntentId || 'manual',
       amount: 2500,
       posts_remaining: 3,
       status: 'active'

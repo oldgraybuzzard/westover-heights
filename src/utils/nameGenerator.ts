@@ -1,0 +1,19 @@
+const adjectives = [
+  'Swift', 'Bright', 'Clever', 'Wise', 'Kind', 'Bold', 'Calm', 'Eager', 
+  'Fair', 'Brave', 'Sharp', 'Quick', 'Noble', 'Proud', 'Smart', 'True',
+  'Great', 'True', 'Wise', 'Witty', 'Clever', 'Kind', 'Bold',
+  'Calm', 'Fair', 'Brave', 'Sharp', 'Quick', 'Noble', 'Proud', 'Smart', 'Shy', 'Tall', 'Short', 'Fat', 'Thin', 'Big', 'Small', 'Slow', 'Late', 'Early', 'Good',   'Low', 'Hot',   'Dry',  'Hard',  'Dark', 'Weak', 'Simple',  'Short', 'Long', 'Near', 'Far', 'Slow',    'Late', 'Early', 'Good',   'Low', 'Hot',   'Dry',  'Hard', 'Light', 'Bright', 'Dark', 'Weak', 'Simple',  'Short', 'Long', 'Near', 'Far', 'Slow',    'Late', 'Early', 'Good',  'High', 'Low', 'Hot',   'Dry',  'Hard',  'Bright', 'Dark', 'Weak', 'Simple',  'Short', 'Long', 'Near', 'Far', 'Slow',  'Old', 'New', 'Late', 'Early', 'Good',   'Low', 'Hot', 'Dry',  'Hard',  'Bright', 'Dark', 'Weak', 'Simple', 'Complex', 'Short', 'Long', 'Near', 'Far', 'Slow', 'Young',   'Late', 'Early', 'Good',   'Low', 'Hot',   'Dry',  'Hard',  'Bright', 'Dark', 'Strong', 'Weak', 'Simple',  'Short', 'Long', 'Near', 'Far', 'Slow',    'Late', 'Early', 'Good',   'Low', 'Hot',   'Dry',  'Hard', 'Bright', 'Dark', 'Weak', 'Simple',  'Short', 'Long', 'Near', 'Far', 'Slow', 'Late', 'Early', 'Good',   'Low', 'Hot',   'Dry',  'Hard',  'Bright', 'Dark', 'Weak', 'Simple',  'Short', 'Long', 'Near', 'Far', 'Fast', 'Slow',    'Late', 'Early', 'Good', 'Bad',  'Low', 'Hot', 'Cold', 'Wet', 'Dry', 'Soft', 'Hard', 'Heavy',  'Bright', 'Dark', 'Weak', 'Simple',  'Short', 'Long', 'Near', 'Far', 'Slow',  'Late', 'Early', 'Good',   'Low', 'Hot',   'Dry', 'Soft'
+];
+
+const nouns = [
+  'Scholar', 'Thinker', 'Mind', 'Spirit', 'Sage', 'Expert', 'Master',
+  'Guide', 'Mentor', 'Leader', 'Pioneer', 'Seeker', 'Explorer', 'Solver', 'Healer', 'Helper', 'Friend', 'Companion', 'Ally', 'Partner', 'Champion', 'Hero', 'Savior', 'Defender', 'Guardian', 'Protector', 'Warrior',  'Paladin', 'Crusader', 'Adventurer', 'Voyager', 'Pioneer', 'Trailblazer', 'Innovator', 'Creator', 'Artist', 'Sculptor', 'Painter', 'Poet', 'Writer', 'Singer', 'Dancer', 'Actor', 'Musician', 'Composer', 'Conductor', 'Director', 'Producer', 'Designer', 'Architect', 'Engineer', 'Scientist', 'Researcher', 'Scholar', 'Thinker', 'Mind', 'Spirit', 'Sage', 'Expert', 'Master', 'Guide', 'Mentor', 'Leader', 'Pioneer', 'Seeker', 'Explorer', 'Solver', 'Healer', 'Helper', 'Friend', 'Companion', 'Ally', 'Partner', 'Champion', 'Hero', 'Savior', 'Defender', 'Guardian', 'Protector', 'Warrior', 'Knight', 'Paladin', 'Crusader', 'Adventurer', 'Voyager', 'Pioneer', 'Trailblazer', 'Innovator', 'Creator', 'Artist', 'Sculptor', 'Painter', 'Poet', 'Writer', 'Singer', 'Dancer', 'Actor', 'Musician', 'Composer', 'Conductor', 'Director', 'Producer', 'Designer', 'Architect', 'Engineer', 'Scientist', 'Researcher', 'Scholar', 'Thinker', 'Mind', 'Spirit', 'Sage', 'Expert', 'Master', 'Guide', 'Mentor', 'Leader', 'Pioneer', 'Seeker', 'Explorer', 'Solver', 'Healer', 'Helper', 'Friend', 'Companion', 'Ally', 'Partner', 'Champion', 'Hero', 'Savior', 'Defender', 'Guardian', 'Protector', 'Warrior',  'Paladin', 'Crusader', 'Adventurer', 'Voyager', 'Pioneer', 'Trailblazer', 'Innovator', 'Creator', 'Artist', 'Sculptor', 'Painter', 'Poet', 'Writer', 'Singer', 'Dancer', 'Actor', 'Musician', 'Composer', 'Conductor', 'Director', 'Producer', 'Designer', 'Architect', 'Engineer', 'Scientist', 'Researcher'
+];
+
+export function generateDisplayName(): string {
+  const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const noun = nouns[Math.floor(Math.random() * nouns.length)];
+  const number = Math.floor(Math.random() * 999) + 1;
+  
+  return `${adjective}${noun}${number}`;
+}

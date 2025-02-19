@@ -2,30 +2,25 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-01-27.acacia' as const,
+  apiVersion: '2023-10-16',
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    // Create payment intent without customer information
+    const { amount } = req.body;
+
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: 2500, // $25.00
+      amount,
       currency: 'usd',
-      payment_method_types: ['card'],
-      metadata: {
-        // Store only anonymous session ID
-        anonymous_session: req.body.sessionId,
-      },
     });
 
-    res.status(200).json({
-      clientSecret: paymentIntent.client_secret,
-    });
+    res.status(200).json({ clientSecret: paymentIntent.client_secret });
   } catch (err) {
-    res.status(500).json({ message: 'Error creating payment intent' });
+    console.error('Error creating payment intent:', err);
+    res.status(500).json({ error: 'Error creating payment intent' });
   }
 }
