@@ -35,7 +35,7 @@ const ResourcesPage: React.FC = () => {
             title="Herpes Handbook (English)"
           />
           <PdfViewer
-            pdfUrl="/pdf/Herpes-Handbook-ESP-1.pdf"
+            pdfUrl="/pdf/Herpes-Handbook-ESP.pdf"
             title="Manual de Herpes (Español)"
           />
         </div>
