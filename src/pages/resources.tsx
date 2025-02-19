@@ -2,7 +2,13 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FaFileDownload, FaVideo, FaExternalLinkAlt } from 'react-icons/fa';
-import PdfViewer from '@/components/PdfViewer';
+import dynamic from 'next/dynamic';
+
+// Dynamically import PdfViewer with no SSR
+const PdfViewer = dynamic(() => import('@/components/PdfViewer'), {
+  ssr: false,
+  loading: () => <div className="h-96 bg-gray-50 rounded-lg animate-pulse" />
+});
 
 const ResourcesPage: React.FC = () => {
   return (

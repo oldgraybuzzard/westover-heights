@@ -1,144 +1,79 @@
-import React, { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-import { FaDownload, FaChevronLeft, FaChevronRight, FaEye } from 'react-icons/fa';
-import { pdfjs } from 'react-pdf';
+import { useState } from 'react';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
+import { FaDownload, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
-// Set worker source path
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+// Set worker path
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
-// Dynamically import components
-const PDFDocument = dynamic(() => import('react-pdf').then(mod => mod.Document), {
-  ssr: false,
-  loading: () => <LoadingSpinner />
-});
-
-const PDFPage = dynamic(() => import('react-pdf').then(mod => mod.Page), {
-  ssr: false
-});
-
-const LoadingSpinner = () => (
-  <div className="flex justify-center items-center h-96">
-    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-  </div>
-);
-
-interface PdfViewerProps {
+interface PDFViewerProps {
   pdfUrl: string;
   title: string;
 }
 
-const PdfViewer: React.FC<PdfViewerProps> = ({ pdfUrl, title }) => {
-  const [isViewerOpen, setIsViewerOpen] = useState(false);
+const PDFViewer = ({ pdfUrl, title }: PDFViewerProps) => {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
-  const [width, setWidth] = useState(600);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const updateWidth = () => {
-      setWidth(Math.min(600, window.innerWidth - 48));
-    };
-
-    if (isViewerOpen) {
-      updateWidth();
-      window.addEventListener('resize', updateWidth);
-      return () => window.removeEventListener('resize', updateWidth);
-    }
-  }, [isViewerOpen]);
-
-  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
-  };
-
-  const changePage = (offset: number) => {
-    setPageNumber(prevPageNumber => prevPageNumber + offset);
-  };
-
-  const downloadPdf = () => {
-    window.open(pdfUrl, '_blank');
-  };
-
-  if (!isViewerOpen) {
-    return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">{title}</h3>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setIsViewerOpen(true)}
-              className="btn-secondary flex items-center gap-2"
-            >
-              <FaEye /> View PDF
-            </button>
-            <button
-              onClick={downloadPdf}
-              className="btn-primary flex items-center gap-2"
-            >
-              <FaDownload /> Download
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+    setLoading(false);
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4">
+    <div className="bg-gray-50 rounded-lg p-4">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold">{title}</h3>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setIsViewerOpen(false)}
-            className="btn-secondary flex items-center gap-2"
-          >
-            Close Viewer
-          </button>
-          <button
-            onClick={downloadPdf}
-            className="btn-primary flex items-center gap-2"
-          >
-            <FaDownload /> Download
-          </button>
-        </div>
+        <a
+          href={pdfUrl}
+          download
+          className="btn-secondary flex items-center gap-2 text-sm"
+        >
+          <FaDownload /> Download PDF
+        </a>
       </div>
 
-      <div className="flex flex-col items-center">
-        <PDFDocument
+      <div className="flex justify-center">
+        <Document
           file={pdfUrl}
           onLoadSuccess={onDocumentLoadSuccess}
-          loading={<LoadingSpinner />}
-          error={
-            <div className="text-red-500 p-4">
-              Failed to load PDF. Please try again later.
-            </div>
-          }
+          loading={<div className="text-center py-4">Loading PDF...</div>}
+          error={<div className="text-center py-4 text-red-500">Failed to load PDF</div>}
         >
-          <PDFPage pageNumber={pageNumber} width={width} />
-        </PDFDocument>
-
-        {numPages && (
-          <div className="flex items-center gap-4 mt-4">
-            <button
-              onClick={() => changePage(-1)}
-              disabled={pageNumber <= 1}
-              className="btn-secondary btn-sm flex items-center gap-2"
-            >
-              <FaChevronLeft /> Previous
-            </button>
-            <span className="text-gray-600">
-              Page {pageNumber} of {numPages}
-            </span>
-            <button
-              onClick={() => changePage(1)}
-              disabled={pageNumber >= numPages}
-              className="btn-secondary btn-sm flex items-center gap-2"
-            >
-              Next <FaChevronRight />
-            </button>
-          </div>
-        )}
+          <Page
+            pageNumber={pageNumber}
+            renderTextLayer={false}
+            renderAnnotationLayer={false}
+            className="border shadow-sm"
+          />
+        </Document>
       </div>
+
+      {!loading && numPages && (
+        <div className="flex justify-center items-center gap-4 mt-4">
+          <button
+            onClick={() => setPageNumber(page => Math.max(1, page - 1))}
+            disabled={pageNumber <= 1}
+            className="btn-secondary p-2"
+          >
+            <FaChevronLeft />
+          </button>
+          <span className="text-sm">
+            Page {pageNumber} of {numPages}
+          </span>
+          <button
+            onClick={() => setPageNumber(page => Math.min(numPages, page + 1))}
+            disabled={pageNumber >= numPages}
+            className="btn-secondary p-2"
+          >
+            <FaChevronRight />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
 
-export default PdfViewer; 
+export default PDFViewer; 
