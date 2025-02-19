@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase/client';
-import { User, UserRole } from '@/types/user';
+import { UserRole } from '@/types/user';
 import { toast } from 'react-hot-toast';
 import UserBadge from '@/components/UserBadge';
 import { useRouter } from 'next/router';
@@ -11,6 +11,7 @@ import { format, parseISO } from 'date-fns';
 import PasswordResetButton from '@/components/admin/PasswordResetButton';
 import PaymentHistory from '@/components/admin/PaymentHistory';
 import React from 'react';
+import { FaFileExport, FaCalendar, FaFilter } from 'react-icons/fa';
 
 interface Profile {
   id: string;
@@ -64,9 +65,60 @@ const formatDate = (dateString: string) => {
   }
 };
 
+interface UserWithPosts {
+  id: string;
+  email: string;
+  roles: string[];
+  display_name: string;
+  post_count: number;
+  created_at: string;
+  remaining_posts?: number;
+}
+
+// Add these helper functions before the AdminUsersPage component
+const convertToCSV = (users: UserWithPosts[]) => {
+  const headers = ['Email', 'Display Name', 'Roles', 'Post Count', 'Remaining Posts', 'Created At'];
+  const rows = users.map(user => [
+    user.email,
+    user.display_name,
+    user.roles.join(', '),
+    user.post_count.toString(),
+    user.remaining_posts?.toString() || '0',
+    formatDate(user.created_at)
+  ]);
+  return [headers, ...rows].map(row => row.join(',')).join('\n');
+};
+
+const convertToExcel = async (users: UserWithPosts[]) => {
+  const XLSX = (await import('xlsx-js-style')).default;
+  const data = users.map(user => ({
+    Email: user.email,
+    'Display Name': user.display_name,
+    Roles: user.roles.join(', '),
+    'Post Count': user.post_count,
+    'Remaining Posts': user.remaining_posts || 0,
+    'Created At': formatDate(user.created_at)
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Users');
+  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  return buffer;
+};
+
+const downloadFile = (content: string | Buffer, filename: string, type: string) => {
+  const blob = new Blob([content], { type });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  window.URL.revokeObjectURL(url);
+};
+
 export default function AdminUsersPage() {
-  const { isAdmin } = useAuth();
-  const [users, setUsers] = useState<User[]>([]);
+  const { isAdmin, isExpert } = useAuth();
+  const [users, setUsers] = useState<UserWithPosts[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -79,7 +131,7 @@ export default function AdminUsersPage() {
   const [editForm, setEditForm] = useState<EditUserForm | null>(null);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'ALL'>('ALL');
-  const [sortField, setSortField] = useState<keyof User>('created_at');
+  const [sortField, setSortField] = useState<keyof UserWithPosts>('created_at');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -130,13 +182,9 @@ export default function AdminUsersPage() {
         return;
       }
 
-      const formattedUsers = data?.map(profile => ({
-        id: profile.id,
-        email: profile.email,
-        roles: profile.roles || ['PARTICIPANT'],
-        display_name: profile.display_name,
-        created_at: profile.created_at,
-        post_count: profile.post_count
+      const formattedUsers = data?.map(user => ({
+        ...user,
+        remaining_posts: 0
       })) || [];
 
       setUsers(formattedUsers);
@@ -270,8 +318,8 @@ export default function AdminUsersPage() {
         return matchesSearch && matchesRole && matchesPostCount && matchesDate;
       })
       .sort((a, b) => {
-        const aVal = a[sortField];
-        const bVal = b[sortField];
+        const aVal = a[sortField] ?? '';
+        const bVal = b[sortField] ?? '';
         const modifier = sortDirection === 'asc' ? 1 : -1;
         return aVal < bVal ? -1 * modifier : 1 * modifier;
       });
@@ -323,57 +371,26 @@ export default function AdminUsersPage() {
   };
 
   // Add export function
-  const exportUsers = async (format: ExportFormat = 'csv') => {
+  const handleExport = async (format: 'csv' | 'xlsx' | 'json') => {
     const filteredUsers = getSortedAndFilteredUsers();
-    let blob: Blob;
-    let filename: string;
 
-    if (format === 'xlsx') {
-      // Dynamically import XLSX only when needed
-      const XLSX = (await import('xlsx-js-style')).default;
-      const data = filteredUsers.map(user => ({
-        Email: user.email,
-        'Display Name': user.display_name,
-        Roles: user.roles.join(', '),
-        'Created At': formatDate(user.created_at)
-      }));
-      const ws = XLSX.utils.aoa_to_sheet([
-        Object.keys(data[0]), // Headers
-        ...data.map(obj => Object.values(obj)) // Data rows
-      ]);
-      const wb = { Sheets: { Users: ws }, SheetNames: ['Users'] };
-      const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
-      blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      filename = `users-export-${new Date().toISOString().split('T')[0]}.xlsx`;
-    } else if (format === 'csv') {
-      const csv = [
-        ['Email', 'Display Name', 'Roles', 'Post Count', 'Created At'],
-        ...filteredUsers.map(user => [
-          user.email,
-          user.display_name,
-          user.roles.join(', '),
-          user.post_count.toString(),
-          formatDate(user.created_at)
-        ])
-      ].map(row => row.join(',')).join('\n');
-
-      blob = new Blob([csv], { type: 'text/csv' });
-      filename = `users-export-${new Date().toISOString().split('T')[0]}.csv`;
-    } else {
-      const data = filteredUsers.map(user => ({
-        ...user,
-        created_at: formatDate(user.created_at)
-      }));
-      blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      filename = `users-export-${new Date().toISOString().split('T')[0]}.json`;
+    switch (format) {
+      case 'csv':
+        // Export as CSV
+        const csvContent = convertToCSV(filteredUsers);
+        downloadFile(csvContent, `users-export.csv`, 'text/csv');
+        break;
+      case 'xlsx':
+        // Export as Excel
+        const excelBuffer = await convertToExcel(filteredUsers);
+        downloadFile(excelBuffer, `users-export.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        break;
+      case 'json':
+        // Export as JSON
+        const jsonContent = JSON.stringify(filteredUsers, null, 2);
+        downloadFile(jsonContent, `users-export.json`, 'application/json');
+        break;
     }
-
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    window.URL.revokeObjectURL(url);
   };
 
   // Add date range preset handler
@@ -465,6 +482,165 @@ export default function AdminUsersPage() {
     }
   }, []);
 
+  const grantAdditionalPosts = async (userId: string, amount: number = 1) => {
+    try {
+      const { data, error } = await supabase.rpc('increment_remaining_posts', {
+        user_id: userId,
+        increment_amount: amount
+      });
+
+      if (error) throw error;
+
+      // Update local state
+      setUsers(users.map(user => {
+        if (user.id === userId) {
+          return {
+            ...user,
+            remaining_posts: (user.remaining_posts || 0) + amount
+          };
+        }
+        return user;
+      }));
+
+      toast.success('Additional posts granted successfully');
+    } catch (error) {
+      toast.error('Failed to grant additional posts');
+      console.error('Error granting posts:', error);
+    }
+  };
+
+  // Add a tooltip component for the buttons
+  const Tooltip = ({ children, text }: { children: React.ReactNode; text: string }) => (
+    <div className="group relative">
+      {children}
+      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+        {text}
+      </div>
+    </div>
+  );
+
+  const ExportSection = () => {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <FaFileExport className="text-primary" />
+            Export Users Data
+          </h2>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          {/* Date Range Selection */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <FaCalendar className="text-gray-400" />
+              Date Range
+            </label>
+            <select
+              className="form-select w-full"
+              onChange={(e) => {
+                const preset = e.target.value as DateRangePreset;
+                if (preset !== 'custom') {
+                  setFilters({
+                    ...filters,
+                    dateFrom: dateRangePresets[preset].from.toISOString().split('T')[0],
+                    dateTo: dateRangePresets[preset].to.toISOString().split('T')[0]
+                  });
+                }
+              }}
+            >
+              <option value="all">All Time</option>
+              <option value="today">Today</option>
+              <option value="thisWeek">This Week</option>
+              <option value="thisMonth">This Month</option>
+              <option value="thisYear">This Year</option>
+              <option value="custom">Custom Range</option>
+            </select>
+
+            {/* Custom Date Range Inputs */}
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <input
+                type="date"
+                value={filters.dateFrom}
+                onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                className="form-input text-sm"
+                placeholder="From"
+              />
+              <input
+                type="date"
+                value={filters.dateTo}
+                onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                className="form-input text-sm"
+                placeholder="To"
+              />
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <FaFilter className="text-gray-400" />
+              Filters
+            </label>
+            <div className="space-y-2">
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value as UserRole | 'ALL')}
+                className="form-select w-full"
+              >
+                <option value="ALL">All Roles</option>
+                <option value="PARTICIPANT">Participants</option>
+                <option value="EXPERT">Experts</option>
+                <option value="ADMIN">Admins</option>
+              </select>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="number"
+                  value={filters.minPosts}
+                  onChange={(e) => setFilters({ ...filters, minPosts: e.target.value })}
+                  className="form-input text-sm"
+                  placeholder="Min Posts"
+                />
+                <input
+                  type="number"
+                  value={filters.maxPosts}
+                  onChange={(e) => setFilters({ ...filters, maxPosts: e.target.value })}
+                  className="form-input text-sm"
+                  placeholder="Max Posts"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Export Buttons */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Export Format</label>
+            <div className="grid grid-cols-1 gap-2">
+              <button
+                onClick={() => handleExport('csv')}
+                className="btn-secondary flex items-center justify-center gap-2 py-2"
+              >
+                Export as CSV
+              </button>
+              <button
+                onClick={() => handleExport('xlsx')}
+                className="btn-secondary flex items-center justify-center gap-2 py-2"
+              >
+                Export as Excel
+              </button>
+              <button
+                onClick={() => handleExport('json')}
+                className="btn-secondary flex items-center justify-center gap-2 py-2"
+              >
+                Export as JSON
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -477,11 +653,13 @@ export default function AdminUsersPage() {
     <div className="container max-w-[95%] mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Manage Users</h1>
 
+      <ExportSection />
+
       <div className="bg-white shadow-sm rounded-lg overflow-x-auto">
         <table className="min-w-full table-fixed divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="w-[15%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="w-[20%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Email
               </th>
               <th className="w-[15%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -493,13 +671,13 @@ export default function AdminUsersPage() {
               <th className="w-[8%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Posts
               </th>
+              <th className="w-[10%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Remaining
+              </th>
               <th className="w-[12%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Created
               </th>
-              <th className="w-[15%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Payment History
-              </th>
-              <th className="w-[25%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="w-[30%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -549,32 +727,62 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-6 py-4">{user.roles.join(', ')}</td>
                     <td className="px-6 py-4">{user.post_count}</td>
-                    <td className="px-6 py-4">{formatDate(user.created_at)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <button
-                        onClick={() => setSelectedUserId(selectedUserId === user.id ? null : user.id)}
-                        className="text-primary hover:text-primary-dark"
-                      >
-                        {selectedUserId === user.id ? 'Hide History' : 'View History'}
-                      </button>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-900">
+                          {user.remaining_posts || 0}
+                        </span>
+                        {(isExpert() || isAdmin()) && (
+                          <div className="flex items-center space-x-1">
+                            <button
+                              onClick={() => grantAdditionalPosts(user.id, 1)}
+                              className="p-1 text-xs bg-primary text-white rounded hover:bg-primary-dark"
+                              title="Grant 1 post"
+                            >
+                              +1
+                            </button>
+                            <button
+                              onClick={() => grantAdditionalPosts(user.id, 3)}
+                              className="p-1 text-xs bg-primary text-white rounded hover:bg-primary-dark"
+                              title="Grant 3 posts"
+                            >
+                              +3
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 space-x-2">
-                      <select
-                        value={user.roles[0]}
-                        onChange={(e) => updateUserRole(user.id, e.target.value as UserRole)}
-                        className="form-select"
-                      >
-                        <option value="PARTICIPANT">Participant</option>
-                        <option value="EXPERT">Expert</option>
-                        <option value="ADMIN">Admin</option>
-                      </select>
-                      <button
-                        onClick={() => deleteUser(user.id)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        Delete
-                      </button>
-                      <PasswordResetButton userId={user.id} userEmail={user.email} />
+                    <td className="px-6 py-4">{formatDate(user.created_at)}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-4">
+                        <select
+                          value={user.roles[0]}
+                          onChange={(e) => updateUserRole(user.id, e.target.value as UserRole)}
+                          className="form-select text-sm min-w-[120px]"
+                        >
+                          <option value="PARTICIPANT">Participant</option>
+                          <option value="EXPERT">Expert</option>
+                          <option value="ADMIN">Admin</option>
+                        </select>
+
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <button
+                            onClick={() => setSelectedUserId(selectedUserId === user.id ? null : user.id)}
+                            className="text-primary hover:text-primary-dark text-sm whitespace-nowrap"
+                          >
+                            {selectedUserId === user.id ? 'Hide History' : 'View $ History'}
+                          </button>
+
+                          <PasswordResetButton userId={user.id} userEmail={user.email} />
+
+                          <button
+                            onClick={() => deleteUser(user.id)}
+                            className="text-red-600 hover:text-red-800 text-sm whitespace-nowrap"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                   {selectedUserId === user.id && (
@@ -684,42 +892,6 @@ export default function AdminUsersPage() {
           </div>
         </div>
       )}
-
-      {/* Update the export button to a dropdown */}
-      <div className="relative inline-block">
-        <button
-          onClick={() => {
-            const menu = document.getElementById('export-menu');
-            menu?.classList.toggle('hidden');
-          }}
-          className="px-3 py-1 text-primary border border-primary rounded hover:bg-primary/10"
-        >
-          Export ▼
-        </button>
-        <div
-          id="export-menu"
-          className="hidden absolute right-0 mt-1 bg-white border rounded shadow-lg py-1 z-10"
-        >
-          <button
-            onClick={() => exportUsers('csv')}
-            className="block w-full px-4 py-2 text-left hover:bg-gray-50"
-          >
-            Export as CSV
-          </button>
-          <button
-            onClick={() => exportUsers('xlsx')}
-            className="block w-full px-4 py-2 text-left hover:bg-gray-50"
-          >
-            Export as Excel
-          </button>
-          <button
-            onClick={() => exportUsers('json')}
-            className="block w-full px-4 py-2 text-left hover:bg-gray-50"
-          >
-            Export as JSON
-          </button>
-        </div>
-      </div>
 
       {/* Update the presets dropdown to include edit buttons */}
       <div className="relative">

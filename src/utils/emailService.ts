@@ -39,7 +39,7 @@ class EmailService {
           To: [
             {
               Email: adminEmail,
-              Name: 'Westover Heights Clinic',
+              Name: 'Westover Research Group',
             },
           ],
           Subject: `New Question: ${question.title}`,
@@ -78,7 +78,7 @@ class EmailService {
           To: [
             {
               Email: userEmail,
-              Name: 'Westover Heights Clinic',
+              Name: 'Westover Research Group',
             },
           ],
           Subject: 'Your Question Has Been Answered',

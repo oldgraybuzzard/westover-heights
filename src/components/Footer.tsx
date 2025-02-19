@@ -11,7 +11,7 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">About Us</h3>
             <p className="text-gray-600 text-sm">
-              Westover Heights Clinic specializes in the diagnosis and treatment of herpes
+              Westover Research Group (formerly the Westover Heights Clinic) specializes in the diagnosis and treatment of herpes
               and other STIs, providing expert care and consultation services.
             </p>
           </div>

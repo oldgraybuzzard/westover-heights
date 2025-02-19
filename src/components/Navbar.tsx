@@ -106,15 +106,20 @@ const Navbar: React.FC = () => {
             <Link href="/">
               <Image
                 src="/images/logo.jpg"
-                alt="Westover Heights Clinic"
+                alt="Westover Research Group"
                 width={48}
                 height={48}
                 style={{ width: '48px', height: '48px' }}
               />
             </Link>
-            <Link href="/" className="text-xl font-bold text-primary">
-              Westover Heights Clinic
-            </Link>
+            <div className="flex flex-col">
+              <Link href="/" className="text-xl font-bold text-primary">
+                Westover Research Group
+              </Link>
+              <span className="text-xs text-gray-500">
+                (Formerly the Westover Heights Clinic)
+              </span>
+            </div>
           </div>
 
           {/* Navigation Links */}

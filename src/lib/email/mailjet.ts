@@ -42,7 +42,7 @@ export const sendEmail = async (data: {
         To: [
           {
             Email: process.env.CONTACT_EMAIL_TO || 'contact@westoverheights.com',
-            Name: 'Westover Heights Clinic',
+            Name: 'Westover Research Group',
           },
         ],
         Subject: `New Contact Form Submission: ${reason}`,

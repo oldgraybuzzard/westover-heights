@@ -29,7 +29,7 @@ const HomePage: React.FC = () => {
         <div className="absolute inset-0 z-0">
           <Image
             src="/images/hero.jpg"
-            alt="Westover Heights Clinic"
+            alt="Westover Research Group"
             fill
             className="object-cover"
             priority
@@ -69,7 +69,7 @@ const HomePage: React.FC = () => {
             Q&A Forum
           </h2>
           <p className="text-gray-600 mb-6">
-            Get personalized answers from Terri Warren at Westover Heights Clinic. Each question includes
+            Get personalized answers from Terri Warren at Westover Research Group. Each question includes
             two follow-up opportunities to ensure all your concerns are addressed.
           </p>
           <div className="text-lg font-semibold text-gray-900 mb-6">
@@ -89,7 +89,7 @@ const HomePage: React.FC = () => {
             Video Consultation
           </h2>
           <p className="text-gray-600 mb-6">
-            Schedule a private video consultation with Terri Warren through Westover Heights Clinic's
+            Schedule a private video consultation with Terri Warren through Westover Research Group's
             secure telemedicine portal for in-depth discussion of your specific situation.
           </p>
           <div className="text-lg font-semibold text-gray-900 mb-6">
@@ -109,7 +109,7 @@ const HomePage: React.FC = () => {
             Western Blot Study
           </h2>
           <p className="text-gray-600 mb-6">
-            Join Westover Heights Clinic's research study comparing traditional screening tests
+            Join Westover Research Group's research study comparing traditional screening tests
             to the gold standard herpes Western blot. Get access to the most accurate herpes testing available.
           </p>
           <div className="text-lg font-semibold text-gray-900 mb-6">
@@ -126,7 +126,7 @@ const HomePage: React.FC = () => {
 
       {/* Trust Indicators */}
       <div className="mt-16 text-center">
-        <p className="text-gray-500 mb-4">Westover Heights Clinic Excellence</p>
+        <p className="text-gray-500 mb-4">Westover Research Group Excellence</p>
         <div className="flex justify-center space-x-8">
           <div className="text-gray-600">Clinical Expertise</div>
           <div className="text-gray-600">Research Leadership</div>
