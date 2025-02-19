@@ -82,5 +82,5 @@ logs
 .env.production.local
 
 # Exclude PDFs from git but keep the directory
-public/pdf/*
+
 !public/pdf/.gitkeep 
