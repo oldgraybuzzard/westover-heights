@@ -68,7 +68,7 @@ const HomePage: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
             Q&A Forum
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 text-mb-6">
             Get personalized answers from Terri Warren at Westover Research Group. Each question includes
             two follow-up opportunities to ensure all your concerns are addressed.
           </p>

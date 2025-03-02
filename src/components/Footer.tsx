@@ -4,8 +4,8 @@ import { FaFacebook, FaTwitter, FaEnvelope } from 'react-icons/fa';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-white border-t mt-auto">
-      <div className="max-w-7xl mx-auto px-4 py-12">
+    <footer className="bg-gray-50 border-t">
+      <div className="max-w-7xl mx-auto py-6 px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* About */}
           <div>
@@ -108,6 +108,21 @@ const Footer: React.FC = () => {
               Terms of Service
             </Link>
           </div>
+        </div>
+
+        <div className="text-xs text-gray-400 text-center mt-4">
+          <p>© {new Date().getFullYear()} Westover Heights Clinic. All rights reserved.</p>
+          <p className="mt-1">
+            Developed by {''}
+            <a
+              href="https://github.com/oldgraybuzzard?tab=repositories"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-gray-600 transition-colors"
+            >
+              Melken Tech Solutions
+            </a>
+          </p>
         </div>
       </div>
     </footer>

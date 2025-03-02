@@ -11,9 +11,7 @@ const WesternBlotPage: React.FC = () => {
       <section className="bg-white rounded-lg shadow-md p-8 mb-8">
         <div className="prose max-w-none text-gray-700">
           <p className="mb-4">
-            I'm here to help you with issues surrounding genital herpes. I've had 35 years of experience
-            as a nurse practitioner, specializing in the care of people who have herpes or who are worried
-            about having herpes.
+            STD experts agree that the herpes western blot is by far the best confirmatory antibody test. The <a className="text-blue-500" href='https://www.cdc.gov/std/treatment-guidelines/herpes.htm'>CDC</a> and FDA recommend confirmatory testing for people who get low positive <a className='text-blue-500' href='https://www.webmd.com/a-to-z-guides/immunoglobulin-test'>IgG</a> results.  People with low positive 'IgG results and people who test positive but have no symptoms should consider a confirmatory test as well. We can assist you to get the western blot if you are willing to be part of a research study we are doing. The study compares the accuracy of IgG test results with gold standard western blot results.  Participating would simply mean allowing us to include IgG and western blot results in our research study data base, anonymously.  No names,
           </p>
           <p>
             Do you have questions about genital herpes? Many people do! It can be a confusing topic, and
@@ -74,7 +72,7 @@ const WesternBlotPage: React.FC = () => {
             <div>
               <h3 className="font-semibold text-lg mb-2">Schedule a Consultation</h3>
               <p className="text-gray-700">
-                Set up an appointment via eVisit. This initial consultation is required as part of
+                Set up an appointment via <a className="text-blue-500" href="https://evisit.com/...">eVisit</a> to discuss your situation and receive a prescription for the herpes western blot test. You'll need to create a new account on eVisit. This initial consultation is required as part of
                 nursing standard of care guidelines.
               </p>
             </div>
@@ -87,8 +85,7 @@ const WesternBlotPage: React.FC = () => {
             <div>
               <h3 className="font-semibold text-lg mb-2">Request Test Kit</h3>
               <p className="text-gray-700">
-                Contact the University of Washington at 206-685-6066 to request your herpes western
-                blot kit.
+                Contact the <a className="text-blue-500" href="https://dlmp.uw.edu/patient-care/client-patient-services">University of Washington</a> at 206-520-4600 to request your herpes westernblot kit.
               </p>
             </div>
           </div>
@@ -100,7 +97,7 @@ const WesternBlotPage: React.FC = () => {
             <div>
               <h3 className="font-semibold text-lg mb-2">Blood Draw & Shipping</h3>
               <p className="text-gray-700">
-                Visit an AnyLabTestNow location for blood draw and shipping services. Fees typically
+                Visit an <a className="text-blue-500" href="https://www.anylabtestnow.com/">AnyLabTestNow</a> location or an  AnyLabTestNow location for blood draw and shipping services. Fees typically
                 range from $40-50 plus shipping costs.
               </p>
             </div>

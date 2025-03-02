@@ -12,7 +12,7 @@ const AboutTerri: React.FC = () => {
           <div className="md:w-1/3">
             <div className="relative w-full aspect-square rounded-lg overflow-hidden">
               <Image
-                src="/images/about.jpeg"
+                src="/images/about.jpg"
                 alt="Terri Warren"
                 fill
                 className="object-cover transition-transform duration-300 hover:scale-105"
@@ -27,8 +27,11 @@ const AboutTerri: React.FC = () => {
             <p className="text-gray-700 mb-4">
               Terri Warren, nurse practitioner, is the owner of the Westover Research Group (formerly the Westover Heights Clinic). She received her bachelor of arts degree from Tarkio College in Tarkio, Missouri; her master of science in education and counseling degree from Western Oregon University in Monmouth, Oregon; her registered nurse degree from Oregon Health and Sciences University in Portland; and her master of science degree as a nurse practitioner from the University of Portland in Portland, Oregon.
             </p>
-            <p className="text-gray-700">
+            <p className="text-gray-700 mb-4">
               Terri has served as principal investigator or sub-investigator on more than 120 clinical trials evaluating various testing mechanisms for sexually transmitted infections, the efficacy of experimental vaccines, and pharmacologic interventions for numerous human infections. Her area of special expertise is the herpes simplex virus.
+            </p>
+            <p className="text-gray-700 mb-4">
+              I'm here to help you with issues surrounding genital herpes. I've had 35 years of experienceas a nurse practitioner, specializing in the care of people who have herpes or who are worriedabout having herpes.
             </p>
           </div>
         </div>
