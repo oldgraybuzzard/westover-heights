@@ -86,6 +86,7 @@ const Navbar: React.FC = () => {
     { name: 'About Terri', href: '/about-terri' },
     { name: 'Resources', href: '/resources' },
     { name: 'Forum', href: '/forum' },
+    { name: 'Video Blog', href: '/video-blog' },
     { name: 'Contact', href: '/contact' },
   ];
 
@@ -150,6 +151,15 @@ const Navbar: React.FC = () => {
                 } transition-colors`}
             >
               {isExpert() ? 'Answer Questions' : 'Forum'}
+            </Link>
+            <Link
+              href="/video-blog"
+              className={`${isActive('/video-blog')
+                ? 'text-primary font-semibold'
+                : 'text-gray-600 hover:text-primary'
+                } transition-colors`}
+            >
+              Video Blog
             </Link>
             <Link
               href="/western-blot"
@@ -231,6 +241,13 @@ const Navbar: React.FC = () => {
               onClick={() => setIsOpen(false)}
             >
               Forum
+            </Link>
+            <Link
+              href="/video-blog"
+              className="block px-3 py-2 text-gray-600 hover:text-primary"
+              onClick={() => setIsOpen(false)}
+            >
+              Video Blog
             </Link>
             <Link
               href="/western-blot"
