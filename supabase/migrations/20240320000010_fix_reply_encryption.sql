@@ -18,8 +18,12 @@ begin
     end if;
     return NEW;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public, pg_temp;
 
+-- Drop the existing trigger if it exists
+drop trigger if exists encrypt_reply_content_trigger on replies;
+
+-- Create the trigger
 create trigger encrypt_reply_content_trigger
     before insert or update of content
     on replies

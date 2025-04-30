@@ -7,6 +7,7 @@ CREATE OR REPLACE FUNCTION increment_post_count(user_id UUID)
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 BEGIN
   UPDATE profiles 

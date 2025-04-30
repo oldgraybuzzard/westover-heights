@@ -91,13 +91,13 @@ create or replace function encrypt_email(p_email text) returns text as $$
 begin
     return encrypt_value(p_email, 'app_key');
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public, pg_temp;
 
 create or replace function decrypt_email(p_encrypted_email text) returns text as $$
 begin
     return decrypt_value(p_encrypted_email, 'app_key');
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public, pg_temp;
 
 -- Test the encryption
 do $$

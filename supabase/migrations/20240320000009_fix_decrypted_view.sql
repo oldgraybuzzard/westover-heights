@@ -2,7 +2,9 @@
 drop view if exists decrypted_topics;
 
 -- Create improved view with proper grouping
-create or replace view decrypted_topics as
+create or replace view decrypted_topics
+with (security_barrier = true, security_invoker = true)
+as
 select 
     t.*,
     decrypt_content(t.encrypted_content) as decrypted_content,

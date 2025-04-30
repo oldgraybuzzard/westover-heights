@@ -3,8 +3,10 @@ update replies
 set encrypted_content = encrypt_content(content)
 where encrypted_content is null;
 
--- Create a separate view for decrypted replies
-create or replace view decrypted_replies as
+-- Create a separate view for decrypted replies with SECURITY BARRIER
+create or replace view decrypted_replies
+with (security_barrier = true)
+as
 select 
     r.*,
     decrypt_content(r.encrypted_content) as decrypted_content,

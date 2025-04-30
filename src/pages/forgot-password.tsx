@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabase/client';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,15 +17,39 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
+      // Get the current origin, handling both production and development environments
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      
+      if (isDevelopment) {
+        // In development, simulate success without actually sending emails
+        console.log(`[DEV MODE] Would send reset email to: ${email}`);
+        console.log(`[DEV MODE] Redirect URL would be: ${origin}/reset-password`);
+        
+        // Simulate a delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Skip actual API call and simulate success
+        setSent(true);
+        toast.success('Development mode: Password reset link generated (check console)');
+      } else {
+        // In production, use the actual Supabase API
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${origin}/reset-password`,
+        });
 
-      if (error) throw error;
-      setSent(true);
-      toast.success('Password reset instructions sent to your email');
+        if (error) throw error;
+        setSent(true);
+        toast.success('Password reset instructions sent to your email');
+      }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to send reset email');
+      console.error('Password reset error:', error);
+      
+      // Check if it's an email sending error
+      if (error instanceof Error && error.message.includes('sending recovery email')) {
+        toast.error('Unable to send recovery email. Please try again later or contact support.');
+      } else {
+        toast.error(error instanceof Error ? error.message : 'Failed to send reset email');
+      }
     } finally {
       setLoading(false);
     }
@@ -37,6 +63,20 @@ export default function ForgotPasswordPage() {
           <p className="text-gray-600">
             We've sent password reset instructions to your email address.
           </p>
+          {isDevelopment && (
+            <div className="mt-4 p-4 bg-yellow-50 rounded-md border border-yellow-200">
+              <p className="text-sm text-yellow-700">
+                <strong>Development Mode:</strong> No email was actually sent. 
+                In a real environment, the user would receive an email with a reset link.
+              </p>
+              <Link
+                href="/reset-password?devMode=true"
+                className="mt-2 inline-block text-yellow-600 hover:text-yellow-800 font-medium"
+              >
+                Simulate clicking reset link
+              </Link>
+            </div>
+          )}
           <Link
             href="/login"
             className="inline-block text-primary hover:text-primary/80"
@@ -58,6 +98,14 @@ export default function ForgotPasswordPage() {
           <p className="mt-2 text-center text-sm text-gray-600">
             Enter your email address and we'll send you instructions to reset your password.
           </p>
+          {isDevelopment && (
+            <div className="mt-4 p-3 bg-yellow-50 rounded-md border border-yellow-200">
+              <p className="text-xs text-yellow-700">
+                <strong>Development Mode:</strong> Email functionality is simulated.
+                No actual emails will be sent.
+              </p>
+            </div>
+          )}
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

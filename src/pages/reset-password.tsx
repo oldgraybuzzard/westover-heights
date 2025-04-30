@@ -11,6 +11,9 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isDevMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('devMode');
+
   useEffect(() => {
     // Check if we have a recovery token
     const hash = window.location.hash;
@@ -29,14 +32,21 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: password
-      });
+      if (isDevelopment && isDevMode) {
+        // Simulate password reset in development mode
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        toast.success('Development mode: Password updated successfully');
+        router.push('/login');
+      } else {
+        const { error } = await supabase.auth.updateUser({
+          password: password
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast.success('Password updated successfully');
-      router.push('/login');
+        toast.success('Password updated successfully');
+        router.push('/login');
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to update password');
     } finally {
