@@ -33,23 +33,34 @@ export default function ForgotPasswordPage() {
         toast.success('Development mode: Password reset link generated (check console)');
       } else {
         // In production, use the actual Supabase API
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${origin}/reset-password`,
-        });
+        try {
+          const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${origin}/reset-password`,
+          });
 
-        if (error) throw error;
-        setSent(true);
-        toast.success('Password reset instructions sent to your email');
+          if (error) throw error;
+          setSent(true);
+          toast.success('Password reset instructions sent to your email');
+        } catch (error) {
+          console.error('Password reset error:', error);
+          
+          // Check if it's an email sending error
+          if (error instanceof Error && error.message.includes('sending recovery email')) {
+            toast.error('Unable to send recovery email. Please try again later or contact support.');
+          } else if (error instanceof Error && error.message.includes('User not found')) {
+            // Don't reveal that the email doesn't exist (security best practice)
+            setSent(true);
+            toast.success('If your email exists in our system, you will receive reset instructions');
+          } else {
+            toast.error('An error occurred. Please try again later.');
+          }
+        }
       }
     } catch (error) {
       console.error('Password reset error:', error);
       
-      // Check if it's an email sending error
-      if (error instanceof Error && error.message.includes('sending recovery email')) {
-        toast.error('Unable to send recovery email. Please try again later or contact support.');
-      } else {
-        toast.error(error instanceof Error ? error.message : 'Failed to send reset email');
-      }
+      // Generic error message to avoid revealing too much information
+      toast.error('An error occurred. Please try again later.');
     } finally {
       setLoading(false);
     }
