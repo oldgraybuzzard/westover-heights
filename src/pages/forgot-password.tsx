@@ -32,34 +32,33 @@ export default function ForgotPasswordPage() {
         setSent(true);
         toast.success('Development mode: Password reset link generated (check console)');
       } else {
-        // In production, use the actual Supabase API
+        // In production, use our custom API endpoint instead of Supabase
         try {
-          const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${origin}/reset-password`,
+          const response = await fetch('/api/auth/reset-password', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email }),
           });
 
-          if (error) throw error;
+          const data = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(data.error || 'Failed to send reset email');
+          }
+          
           setSent(true);
-          toast.success('Password reset instructions sent to your email');
+          toast.success(data.message || 'Password reset instructions sent to your email');
         } catch (error) {
           console.error('Password reset error:', error);
           
-          // Check if it's an email sending error
-          if (error instanceof Error && error.message.includes('sending recovery email')) {
-            toast.error('Unable to send recovery email. Please try again later or contact support.');
-          } else if (error instanceof Error && error.message.includes('User not found')) {
-            // Don't reveal that the email doesn't exist (security best practice)
-            setSent(true);
-            toast.success('If your email exists in our system, you will receive reset instructions');
-          } else {
-            toast.error('An error occurred. Please try again later.');
-          }
+          // Generic error message to avoid revealing too much information
+          toast.error('An error occurred. Please try again later.');
         }
       }
     } catch (error) {
       console.error('Password reset error:', error);
-      
-      // Generic error message to avoid revealing too much information
       toast.error('An error occurred. Please try again later.');
     } finally {
       setLoading(false);

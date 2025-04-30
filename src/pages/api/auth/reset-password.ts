@@ -1,0 +1,145 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { z } from 'zod';
+import Mailjet from 'node-mailjet';
+import { createClient } from '@supabase/supabase-js';
+import { v4 as uuidv4 } from 'uuid';
+import rateLimit from 'express-rate-limit';
+
+// Initialize Supabase admin client
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+);
+
+// Initialize Mailjet
+const mailjet = new Mailjet({
+  apiKey: process.env.MAILJET_API_KEY || '',
+  apiSecret: process.env.MAILJET_SECRET_KEY || '',
+});
+
+// Schema for email validation
+const emailSchema = z.object({
+  email: z.string().email(),
+});
+
+// Rate limiter: 5 requests per 15 minutes
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply rate limiting to this API route
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    // Only allow POST requests
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    // Apply rate limiting
+    await new Promise((resolve) => {
+      limiter(req, res, resolve);
+    });
+
+    // Validate email
+    const { email } = emailSchema.parse(req.body);
+
+    // Check if user exists (but don't reveal this information in the response)
+    const { data: user, error: userError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
+    
+    if (userError) {
+      console.error('Error checking user:', userError);
+      // Don't reveal if user exists or not
+      return res.status(200).json({ message: 'If your email exists in our system, you will receive reset instructions' });
+    }
+
+    if (!user) {
+      // Don't reveal if user exists or not
+      return res.status(200).json({ message: 'If your email exists in our system, you will receive reset instructions' });
+    }
+
+    // Generate a secure token
+    const resetToken = uuidv4();
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 1); // Token valid for 1 hour
+
+    // Store the token in the database
+    const { error: tokenError } = await supabaseAdmin
+      .from('password_reset_tokens')
+      .insert({
+        user_id: user.id,
+        token: resetToken,
+        expires_at: expiresAt.toISOString(),
+      });
+
+    if (tokenError) {
+      console.error('Error storing reset token:', tokenError);
+      return res.status(500).json({ error: 'Failed to process request' });
+    }
+
+    // Generate reset URL
+    const origin = req.headers.origin || process.env.NEXT_PUBLIC_SITE_URL;
+    const resetUrl = `${origin}/reset-password?token=${resetToken}`;
+
+    // Send email using Mailjet
+    const { error: mailError } = await sendResetEmail(email, resetUrl);
+    
+    if (mailError) {
+      console.error('Error sending email:', mailError);
+      return res.status(500).json({ error: 'Failed to send reset email' });
+    }
+
+    // Return success response
+    return res.status(200).json({ message: 'If your email exists in our system, you will receive reset instructions' });
+  } catch (error) {
+    console.error('Password reset request error:', error);
+    return res.status(500).json({ error: 'An unexpected error occurred' });
+  }
+}
+
+async function sendResetEmail(email, resetUrl) {
+  try {
+    const response = await mailjet
+      .post('send', { version: 'v3.1' })
+      .request({
+        Messages: [
+          {
+            From: {
+              Email: process.env.EMAIL_FROM || 'noreply@westoverheights.com',
+              Name: 'Westover Heights Clinic',
+            },
+            To: [
+              {
+                Email: email,
+              },
+            ],
+            Subject: 'Reset Your Password',
+            TextPart: `
+              Reset Your Password
+              
+              Please click the link below to reset your password:
+              ${resetUrl}
+              
+              This link will expire in 1 hour.
+              
+              If you did not request this password reset, please ignore this email.
+            `,
+            HTMLPart: `
+              <h2>Reset Your Password</h2>
+              <p>Please click the link below to reset your password:</p>
+              <p><a href="${resetUrl}" target="_blank">Reset Password</a></p>
+              <p>This link will expire in 1 hour.</p>
+              <p>If you did not request this password reset, please ignore this email.</p>
+            `,
+          },
+        ],
+      });
+    
+    return { error: null };
+  } catch (error) {
+    console.error('Mailjet error:', error);
+    return { error };
+  }
+}
