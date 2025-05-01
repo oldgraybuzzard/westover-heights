@@ -47,7 +47,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { email } = emailSchema.parse(req.body);
 
     // Check if user exists (but don't reveal this information in the response)
-    const { data: user, error: userError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
+    const { data, error: userError } = await supabaseAdmin.auth.admin.listUsers();
+
+    // Find the user with the matching email
+    const user = data?.users?.find(u => u.email === email);
     
     if (userError) {
       console.error('Error checking user:', userError);
@@ -99,7 +102,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 }
 
-async function sendResetEmail(email, resetUrl) {
+async function sendResetEmail(email: string, resetUrl: string) {
   try {
     const response = await mailjet
       .post('send', { version: 'v3.1' })

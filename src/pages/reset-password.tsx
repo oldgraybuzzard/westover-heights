@@ -65,7 +65,7 @@ export default function ResetPassword() {
     }
   }, [token]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -103,9 +103,11 @@ export default function ResetPassword() {
       setTimeout(() => {
         router.push('/auth/signin');
       }, 2000);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Reset password error:', err);
-      setError(err.message || 'An error occurred while resetting your password');
+      setError(
+        err instanceof Error ? err.message : 'An error occurred while resetting your password'
+      );
     } finally {
       setLoading(false);
     }
