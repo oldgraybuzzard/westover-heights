@@ -24,7 +24,7 @@ const HomePage: React.FC = () => {
   return (
     <main className="animate-fade-in">
       {/* Prominent Announcement Banner */}
-      <div className="bg-amber-500 text-white py-4 px-4 sm:px-6 lg:px-8">
+      {/* <div className="bg-amber-500 text-white py-4 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col space-y-3">
             <div className="flex items-center justify-center">
@@ -45,7 +45,7 @@ const HomePage: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Hero Section - Adjusted to not overlap with banner */}
       <section className="relative h-[600px] flex items-center">
