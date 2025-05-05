@@ -533,7 +533,7 @@ const TopicPage: React.FC = () => {
           <h2 className="text-lg font-semibold mb-2">Error Loading Topic</h2>
           <p>{error}</p>
           <button
-            onClick={fetchTopic}
+            onClick={() => id && typeof id === 'string' ? fetchTopic(id) : null}
             className="mt-4 text-red-600 hover:text-red-800 font-medium"
           >
             Try Again
