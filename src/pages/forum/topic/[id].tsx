@@ -50,6 +50,62 @@ interface ExtendedUser extends User {
   roles?: string[];
 }
 
+// Optimize data fetching with caching
+const fetchTopic = async (topicId: string) => {
+  if (!topicId || topicId === 'undefined') {
+    console.error('Invalid topic ID:', topicId);
+    throw new Error('Invalid topic ID');
+  }
+
+  console.log('Starting fetch for topic:', topicId);
+  try {
+    const { data, error } = await supabase
+      .from('topics')
+      .select(`
+        *,
+        author:profiles!topics_author_id_fkey (
+          id,
+          display_name,
+          roles,
+          email_visible,
+          created_at,
+          updated_at
+        ),
+        replies!replies_topic_id_fkey (
+          id,
+          content,
+          created_at,
+          author:profiles!replies_author_id_fkey (
+            id,
+            display_name,
+            roles,
+            email_visible,
+            created_at,
+            updated_at
+          )
+        )
+      `)
+      .eq('id', topicId)
+      .single();
+
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
+
+    if (!data) {
+      console.log('No data returned');
+      throw new Error('Topic not found');
+    }
+
+    console.log('Topic data fetched successfully');
+    return data;
+  } catch (e) {
+    console.error('Error fetching topic:', e);
+    throw e;
+  }
+};
+
 const TopicPage: React.FC = () => {
   const router = useRouter();
   const { id } = router.query;
@@ -63,84 +119,7 @@ const TopicPage: React.FC = () => {
   const [replyErrors, setReplyErrors] = useState<ReplyValidation>({ content: [] });
   const [replyCount, setReplyCount] = useState<number>(0);
   const [canReply, setCanReply] = useState(false);
-
-  const fetchTopic = async () => {
-    try {
-      if (!id) {
-        console.log('No id provided');
-        return;
-      }
-
-      console.log('Starting fetch for topic:', id);
-      const { data, error } = await supabase
-        .from('topics')
-        .select(`
-          *,
-          author:profiles!topics_author_id_fkey (
-            id,
-            display_name,
-            roles,
-            email_visible,
-            created_at,
-            updated_at
-          ),
-          replies!replies_topic_id_fkey (
-            id,
-            content,
-            created_at,
-            author:profiles!replies_author_id_fkey (
-              id,
-              display_name,
-              roles,
-              email_visible,
-              created_at,
-              updated_at
-            )
-          )
-        `)
-        .eq('id', id)
-        .single();
-
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
-      }
-
-      if (!data) {
-        console.log('No data returned');
-        throw new Error('Topic not found');
-      }
-
-      console.log('Topic data:', data);
-      const formattedData: TopicData = {
-        ...data,
-        author: {
-          ...data.author,
-          role: data.author.roles[0] as UserRole || 'PARTICIPANT' as UserRole
-        },
-        replies: data.replies?.map((reply: any) => ({
-          id: reply.id,
-          content: reply.content,
-          created_at: reply.created_at,
-          author: {
-            ...reply.author,
-            roles: reply.author.roles || [],
-            role: reply.author.roles?.[0] as UserRole || 'PARTICIPANT' as UserRole,
-            email_visible: reply.author.email_visible || false,
-            created_at: reply.author.created_at,
-            updated_at: reply.author.updated_at
-          }
-        })) || []
-      };
-
-      setTopic(formattedData);
-      setLoading(false);
-    } catch (e) {
-      console.error('Error fetching topic:', e);
-      setError(e instanceof Error ? e.message : 'An error occurred');
-      setLoading(false);
-    }
-  };
+  const [fetchingData, setFetchingData] = useState(false);
 
   useEffect(() => {
     console.log('Topic page mounted, id:', id);
@@ -148,11 +127,66 @@ const TopicPage: React.FC = () => {
     console.log('Router pathname:', router.pathname);
     console.log('Router asPath:', router.asPath);
 
-    if (id) {
+    let isMounted = true;
+
+    const loadTopic = async () => {
+      // Only proceed if we have a valid ID and we're not already fetching
+      if (!id || typeof id !== 'string' || id === 'undefined' || fetchingData) {
+        return;
+      }
+      
+      setFetchingData(true);
       console.log('Calling fetchTopic with id:', id);
-      fetchTopic();
+      
+      try {
+        const data = await fetchTopic(id);
+        
+        if (!isMounted) return;
+        
+        const formattedData: TopicData = {
+          ...data,
+          author: {
+            ...data.author,
+            role: data.author.roles[0] as UserRole || 'PARTICIPANT' as UserRole
+          },
+          replies: data.replies?.map((reply: any) => ({
+            id: reply.id,
+            content: reply.content,
+            created_at: reply.created_at,
+            author: {
+              ...reply.author,
+              roles: reply.author.roles || [],
+              role: reply.author.roles?.[0] as UserRole || 'PARTICIPANT' as UserRole,
+              email_visible: reply.author.email_visible || false,
+              created_at: reply.author.created_at,
+              updated_at: reply.author.updated_at
+            }
+          })) || []
+        };
+
+        setTopic(formattedData);
+        setLoading(false);
+      } catch (e) {
+        if (!isMounted) return;
+        console.error('Error fetching topic:', e);
+        setError(e instanceof Error ? e.message : 'An error occurred');
+        setLoading(false);
+      } finally {
+        if (isMounted) {
+          setFetchingData(false);
+        }
+      }
+    };
+
+    // Only call loadTopic when id is available and valid
+    if (id && typeof id === 'string' && id !== 'undefined') {
+      loadTopic();
     }
-  }, [id, router]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, router.isReady]);
 
   const validateReply = (content: string): boolean => {
     const errors: ReplyValidation = { content: [] };
@@ -185,7 +219,36 @@ const TopicPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      // Start a Supabase transaction
+      // Optimistically update UI
+      const tempReplyId = `temp-${Date.now()}`;
+      const tempReply: Reply = {
+        id: tempReplyId,
+        content: replyContent.trim(),
+        created_at: new Date().toISOString(),
+        author: {
+          id: user.id,
+          display_name: user.user_metadata?.display_name || 'User',
+          roles: userRoles,
+          role: userRoles[0] || 'PARTICIPANT',
+          email_visible: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      };
+      
+      // Add temporary reply to the UI
+      if (topic) {
+        setTopic({
+          ...topic,
+          replies: [...topic.replies, tempReply]
+        });
+      }
+      
+      // Clear form
+      setReplyContent('');
+      setReplyErrors({ content: [] });
+
+      // Actually submit to server
       const { data: reply, error: replyError } = await supabase
         .rpc('create_reply_and_update_topic', {
           p_content: replyContent.trim(),
@@ -197,12 +260,61 @@ const TopicPage: React.FC = () => {
       if (replyError) throw replyError;
 
       showNotification('success', 'Reply posted successfully');
-      setReplyContent('');
-      setReplyErrors({ content: [] });
-      await fetchTopic();
+      
+      // Update with real data
+      if (topic && id) {
+        const updatedData = await fetchTopic(id as string);
+        const formattedData: TopicData = {
+          ...updatedData,
+          author: {
+            ...updatedData.author,
+            role: updatedData.author.roles[0] as UserRole || 'PARTICIPANT' as UserRole
+          },
+          replies: updatedData.replies?.map((reply: any) => ({
+            id: reply.id,
+            content: reply.content,
+            created_at: reply.created_at,
+            author: {
+              ...reply.author,
+              roles: reply.author.roles || [],
+              role: reply.author.roles?.[0] as UserRole || 'PARTICIPANT' as UserRole,
+              email_visible: reply.author.email_visible || false,
+              created_at: reply.author.created_at,
+              updated_at: reply.author.updated_at
+            }
+          })) || []
+        };
+        setTopic(formattedData);
+      }
     } catch (e) {
       console.error('Error posting reply:', e);
       showNotification('error', e instanceof Error ? e.message : 'Failed to post reply');
+      
+      // Revert optimistic update if there was an error
+      if (topic && id) {
+        const updatedData = await fetchTopic(id as string);
+        const formattedData: TopicData = {
+          ...updatedData,
+          author: {
+            ...updatedData.author,
+            role: updatedData.author.roles[0] as UserRole || 'PARTICIPANT' as UserRole
+          },
+          replies: updatedData.replies?.map((reply: any) => ({
+            id: reply.id,
+            content: reply.content,
+            created_at: reply.created_at,
+            author: {
+              ...reply.author,
+              roles: reply.author.roles || [],
+              role: reply.author.roles?.[0] as UserRole || 'PARTICIPANT' as UserRole,
+              email_visible: reply.author.email_visible || false,
+              created_at: reply.author.created_at,
+              updated_at: reply.author.updated_at
+            }
+          })) || []
+        };
+        setTopic(formattedData);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -218,20 +330,36 @@ const TopicPage: React.FC = () => {
   };
 
   const handleDelete = async (replyId: string) => {
+    if (!replyId || !id || typeof id !== 'string') {
+      console.error('Cannot delete: missing replyId or topic id');
+      return;
+    }
+
     if (!confirm('Are you sure you want to delete this reply?')) return;
 
     try {
-      // First update the topic to remove the expert_response_id and reset status
-      const { error: updateError } = await supabase
+      // First check if this reply is referenced as an expert_response_id
+      const { data: topicData, error: topicError } = await supabase
         .from('topics')
-        .update({
-          expert_response_id: null,
-          status: 'OPEN'
-        })
+        .select('expert_response_id')
         .eq('id', id)
-        .eq('expert_response_id', replyId);
+        .single();
 
-      if (updateError) throw updateError;
+      if (topicError) throw topicError;
+
+      // If this reply is the expert response, update the topic first
+      if (topicData && topicData.expert_response_id === replyId) {
+        console.log('Removing expert response reference before deleting reply');
+        const { error: updateError } = await supabase
+          .from('topics')
+          .update({
+            expert_response_id: null,
+            status: 'OPEN'
+          })
+          .eq('id', id);
+
+        if (updateError) throw updateError;
+      }
 
       // Then delete the reply
       const { error: deleteError } = await supabase
@@ -242,9 +370,33 @@ const TopicPage: React.FC = () => {
 
       if (deleteError) throw deleteError;
 
-      await fetchTopic();
+      // Refresh the topic data
+      if (typeof id === 'string') {
+        const updatedData = await fetchTopic(id);
+        const formattedData: TopicData = {
+          ...updatedData,
+          author: {
+            ...updatedData.author,
+            role: updatedData.author.roles[0] as UserRole || 'PARTICIPANT' as UserRole
+          },
+          replies: updatedData.replies?.map((reply: any) => ({
+            id: reply.id,
+            content: reply.content,
+            created_at: reply.created_at,
+            author: {
+              ...reply.author,
+              roles: reply.author.roles || [],
+              role: reply.author.roles?.[0] as UserRole || 'PARTICIPANT' as UserRole,
+              email_visible: reply.author.email_visible || false,
+              created_at: reply.author.created_at,
+              updated_at: reply.author.updated_at
+            }
+          })) || []
+        };
+        setTopic(formattedData);
+      }
+      
       toast.success('Reply deleted successfully');
-
     } catch (error) {
       console.error('Error deleting:', error);
       toast.error('Failed to delete reply');

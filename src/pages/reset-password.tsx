@@ -14,7 +14,7 @@ const passwordSchema = z.object({
 
 export default function ResetPassword() {
   const router = useRouter();
-  const { token } = router.query;
+  const { token: urlToken, devMode } = router.query;
   
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -22,34 +22,55 @@ export default function ResetPassword() {
   const [error, setError] = useState('');
   const [tokenValid, setTokenValid] = useState(false);
   const [tokenChecked, setTokenChecked] = useState(false);
+  const [token, setToken] = useState<string | undefined>(urlToken as string | undefined);
 
-  // Validate token when component mounts
   useEffect(() => {
+    // Set token from URL parameter
+    if (urlToken && typeof urlToken === 'string') {
+      setToken(urlToken);
+    }
+    
+    // Handle development mode
+    if (devMode === 'true') {
+      console.log('[DEV MODE] Simulating valid token');
+      setTokenValid(true);
+      setTokenChecked(true);
+      // Generate a fake token for development testing
+      if (!urlToken) {
+        const fakeToken = 'dev-' + Math.random().toString(36).substring(2, 15);
+        setToken(fakeToken);
+      }
+      return;
+    }
+
+    // Only proceed with validation if we have a token
+    if (!token) {
+      setTokenChecked(true);
+      return;
+    }
+
     async function validateToken() {
-      if (!token) return;
+      console.log('Validating token:', token);
       
       try {
-        // Check if token exists in our database
-        const { data, error } = await supabase
-          .from('password_reset_tokens')
-          .select('expires_at')
-          .eq('token', token)
-          .single();
+        // Make a request to our API to validate the token
+        const response = await fetch('/api/auth/validate-token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token }),
+        });
 
-        if (error || !data) {
-          setError('Invalid or expired reset link');
+        const data = await response.json();
+        
+        if (!response.ok) {
+          console.error('Token validation failed:', data.error);
+          setError(data.error || 'Invalid or expired reset link');
           setTokenValid(false);
         } else {
-          // Check if token is expired
-          const now = new Date();
-          const expiresAt = new Date(data.expires_at);
-          
-          if (now > expiresAt) {
-            setError('This reset link has expired');
-            setTokenValid(false);
-          } else {
-            setTokenValid(true);
-          }
+          console.log('Token is valid');
+          setTokenValid(true);
         }
       } catch (err) {
         console.error('Error validating token:', err);
@@ -60,10 +81,8 @@ export default function ResetPassword() {
       }
     }
 
-    if (token) {
-      validateToken();
-    }
-  }, [token]);
+    validateToken();
+  }, [token, devMode, urlToken]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -76,8 +95,28 @@ export default function ResetPassword() {
       
       if (!result.success) {
         setError(result.error.errors[0].message);
+        setLoading(false);
         return;
       }
+
+      // Check if we're in development mode
+      if (router.query.devMode === 'true') {
+        console.log('[DEV MODE] Would reset password to:', password);
+        
+        // Simulate a delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        toast.success('Development mode: Password reset successful');
+        
+        // Redirect to login page
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
+        
+        return;
+      }
+
+      console.log('Submitting password reset with token:', token);
 
       // Call our API to complete the password reset
       const response = await fetch('/api/auth/complete-reset', {
@@ -101,7 +140,7 @@ export default function ResetPassword() {
       
       // Redirect to login page
       setTimeout(() => {
-        router.push('/auth/signin');
+        router.push('/login');
       }, 2000);
     } catch (err: unknown) {
       console.error('Reset password error:', err);

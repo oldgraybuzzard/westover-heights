@@ -28,6 +28,19 @@ const limiter = rateLimit({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
+  // Add a custom key generator that works with Next.js API routes
+  keyGenerator: (req) => {
+    // Use X-Forwarded-For header, falling back to a default for local development
+    const forwardedFor = req.headers['x-forwarded-for'];
+    const ip = 
+      (typeof forwardedFor === 'string' ? forwardedFor.split(',')[0] : forwardedFor?.[0]) || 
+      req.socket?.remoteAddress || 
+      '127.0.0.1';
+    
+    return ip;
+  },
+  // Skip rate limiting in development
+  skip: () => process.env.NODE_ENV === 'development',
 });
 
 // Apply rate limiting to this API route
@@ -38,10 +51,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    // Apply rate limiting
-    await new Promise((resolve) => {
-      limiter(req, res, resolve);
-    });
+    // Apply rate limiting (wrapped in try/catch to handle any errors)
+    try {
+      await new Promise((resolve) => {
+        limiter(req, res, resolve);
+      });
+    } catch (error) {
+      console.warn('Rate limiting error (continuing anyway):', error);
+      // Continue processing the request even if rate limiting fails
+    }
 
     // Validate email
     const { email } = emailSchema.parse(req.body);
@@ -86,6 +104,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const origin = req.headers.origin || process.env.NEXT_PUBLIC_SITE_URL;
     const resetUrl = `${origin}/reset-password?token=${resetToken}`;
 
+    console.log('Generated reset URL:', resetUrl); // Add this for debugging
+    console.log('Token stored in database:', {
+      user_id: user.id,
+      token: resetToken,
+      expires_at: expiresAt.toISOString()
+    });
+
     // Send email using Mailjet
     const { error: mailError } = await sendResetEmail(email, resetUrl);
     
@@ -120,21 +145,27 @@ async function sendResetEmail(email: string, resetUrl: string) {
             ],
             Subject: 'Reset Your Password',
             TextPart: `
-              Reset Your Password
-              
-              Please click the link below to reset your password:
-              ${resetUrl}
-              
-              This link will expire in 1 hour.
-              
-              If you did not request this password reset, please ignore this email.
+Reset Your Password
+
+Please click the link below to reset your password:
+${resetUrl}
+
+This link will expire in 1 hour.
+
+If you did not request this password reset, please ignore this email.
             `,
             HTMLPart: `
-              <h2>Reset Your Password</h2>
-              <p>Please click the link below to reset your password:</p>
-              <p><a href="${resetUrl}" target="_blank">Reset Password</a></p>
-              <p>This link will expire in 1 hour.</p>
-              <p>If you did not request this password reset, please ignore this email.</p>
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <h2 style="color: #333; margin-bottom: 20px;">Reset Your Password</h2>
+  <p style="margin-bottom: 15px;">Please click the button below to reset your password:</p>
+  <div style="text-align: center; margin: 25px 0;">
+    <a href="${resetUrl}" style="background-color: #4a90e2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">Reset Password</a>
+  </div>
+  <p style="margin-bottom: 10px;">Or copy and paste this URL into your browser:</p>
+  <p style="margin-bottom: 20px; word-break: break-all; color: #4a90e2;">${resetUrl}</p>
+  <p style="margin-bottom: 10px;">This link will expire in 1 hour.</p>
+  <p style="color: #777;">If you did not request this password reset, please ignore this email.</p>
+</div>
             `,
           },
         ],

@@ -23,8 +23,32 @@ const HomePage: React.FC = () => {
 
   return (
     <main className="animate-fade-in">
-      {/* Hero Section */}
-      <section className="relative h-[600px] flex items-center -mt-16">
+      {/* Prominent Announcement Banner */}
+      <div className="bg-amber-500 text-white py-4 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col space-y-3">
+            <div className="flex items-center justify-center">
+              <svg className="h-6 w-6 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="font-bold text-center">
+                Please pardon the dust as we make some website modifications
+              </p>
+            </div>
+            <div className="flex items-center justify-center">
+              <svg className="h-6 w-6 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <p className="font-bold text-center">
+                Terri is out of office until May 4
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Hero Section - Adjusted to not overlap with banner */}
+      <section className="relative h-[600px] flex items-center">
         {/* Hero Background */}
         <div className="absolute inset-0 z-0">
           <Image

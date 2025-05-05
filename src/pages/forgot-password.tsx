@@ -20,7 +20,11 @@ export default function ForgotPasswordPage() {
       // Get the current origin, handling both production and development environments
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
       
-      if (isDevelopment) {
+      // Add a checkbox or button to force real email sending in development
+      const forceSendRealEmail = isDevelopment && 
+        (document.getElementById('forceSendEmail') as HTMLInputElement)?.checked;
+      
+      if (isDevelopment && !forceSendRealEmail) {
         // In development, simulate success without actually sending emails
         console.log(`[DEV MODE] Would send reset email to: ${email}`);
         console.log(`[DEV MODE] Redirect URL would be: ${origin}/reset-password`);
@@ -32,7 +36,7 @@ export default function ForgotPasswordPage() {
         setSent(true);
         toast.success('Development mode: Password reset link generated (check console)');
       } else {
-        // In production, use our custom API endpoint instead of Supabase
+        // In production or when forcing real email in development
         try {
           const response = await fetch('/api/auth/reset-password', {
             method: 'POST',
@@ -120,20 +124,37 @@ export default function ForgotPasswordPage() {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="email" className="sr-only">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email address
             </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-              placeholder="Email address"
-            />
+            <div className="mt-1">
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                placeholder="you@example.com"
+              />
+            </div>
           </div>
+
+          {isDevelopment && (
+            <div className="flex items-center">
+              <input
+                id="forceSendEmail"
+                name="forceSendEmail"
+                type="checkbox"
+                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+              />
+              <label htmlFor="forceSendEmail" className="ml-2 block text-sm text-gray-900">
+                Send actual email (for testing)
+              </label>
+            </div>
+          )}
 
           <div>
             <button
