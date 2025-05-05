@@ -16,7 +16,7 @@ const AskQuestionPage: React.FC = () => {
   const [isAnonymous, setIsAnonymous] = React.useState(true);
   const [showPayment, setShowPayment] = React.useState(false);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
-  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = React.useState('General Questions');
 
   React.useEffect(() => {
     if (!user) {

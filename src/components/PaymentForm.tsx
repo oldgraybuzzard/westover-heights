@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase/client';
 import { toast } from 'react-hot-toast';
 
 interface PaymentFormProps {
@@ -17,39 +16,78 @@ export default function PaymentForm({ amount, onPaymentSuccess, onPaymentError }
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
+  useEffect(() => {
+    // Log when Stripe and Elements are loaded
+    if (stripe && elements) {
+      console.log('Stripe and Elements loaded successfully');
+    }
+  }, [stripe, elements]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Payment form submitted');
     setError(null);
+    
     if (!stripe || !elements) {
+      console.error('Stripe or Elements not loaded');
       onPaymentError(new Error('Payment system not initialized'));
       return;
     }
 
+    if (!user) {
+      console.error('User not authenticated');
+      onPaymentError(new Error('User not authenticated'));
+      return;
+    }
+
     setProcessing(true);
+    console.log('Processing payment...');
 
     try {
-      if (!user) {
-        onPaymentError(new Error('User not authenticated'));
-        return;
-      }
-
-      const { error: paymentError, paymentIntent } = await stripe.confirmPayment({
+      // Confirm the payment
+      const result = await stripe.confirmPayment({
         elements,
-        redirect: 'if_required',
+        confirmParams: {
+          return_url: `${window.location.origin}/payment-success`,
+          payment_method_data: {
+            billing_details: {
+              email: user.email || undefined,
+            }
+          }
+        },
+        redirect: 'if_required'
       });
 
-      if (paymentError) {
-        throw new Error(paymentError.message);
+      console.log('Payment result:', result);
+
+      if (result.error) {
+        console.error('Payment error:', result.error);
+        throw new Error(result.error.message || 'Payment failed');
       }
 
-      if (paymentIntent) {
-        console.log('Payment intent created:', paymentIntent);
-        await onPaymentSuccess(paymentIntent.id);
+      if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
+        console.log('Payment succeeded:', result.paymentIntent.id);
+        await onPaymentSuccess(result.paymentIntent.id);
+        toast.success('Payment successful!');
+      } else if (result.paymentIntent) {
+        console.log('Payment status:', result.paymentIntent.status);
+        // Handle other payment statuses
+        if (result.paymentIntent.status === 'requires_action') {
+          toast('Additional authentication required. Please complete the verification.', {
+            icon: 'ℹ️',
+            style: {
+              background: '#3498db',
+              color: '#fff',
+            },
+          });
+        }
       }
     } catch (err) {
+      console.error('Payment error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Payment failed';
       setError(errorMessage);
       onPaymentError(err instanceof Error ? err : new Error(errorMessage));
+      toast.error(errorMessage);
     } finally {
       setProcessing(false);
     }
@@ -69,7 +107,7 @@ export default function PaymentForm({ amount, onPaymentSuccess, onPaymentError }
 
       <button
         type="submit"
-        disabled={!stripe || processing}
+        disabled={!stripe || !elements || processing}
         className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {processing ? 'Processing...' : `Pay $${amount}`}

@@ -12,11 +12,11 @@ const PdfViewer = dynamic(() => import('@/components/PdfViewer'), {
 
 const ResourcesPage: React.FC = () => {
   return (
-    <main className="max-w-4xl mx-auto px-4 py-12 pt-16 animate-fade-in">
+    <main className="max-w-4xl mx-auto px-4 py-12 pt-16 animate-fade-in bg-gradient-to-b from-gray-200 to-gray-100">
       <h1 className="text-4xl font-bold text-gray-900 mb-8">Free Resources</h1>
 
       {/* Herpes Handbook Section */}
-      <section className="bg-white rounded-lg shadow-md p-8 mb-8">
+      <section className="bg-white rounded-lg shadow-md p-8 mb-8 border border-primary/10 hover:shadow-lg transition-shadow duration-300">
         <h2 className="text-2xl font-semibold text-gray-900 mb-4">The Updated Herpes Handbook</h2>
         <div className="prose max-w-none text-gray-700 mb-6">
           <p className="mb-4">
@@ -42,7 +42,7 @@ const ResourcesPage: React.FC = () => {
       </section>
 
       {/* The Good News About The Bad News Book Section */}
-      <section className="bg-white rounded-lg shadow-md p-8 mb-8">
+      <section className="bg-white rounded-lg shadow-md p-8 mb-8 border border-primary/10 hover:shadow-lg transition-shadow duration-300">
         <h2 className="text-2xl font-semibold text-gray-900 mb-4">The Good News About The Bad News</h2>
         <div className="md:flex gap-8">
           <div className="md:w-1/4 mb-6 md:mb-0">
@@ -109,7 +109,7 @@ const ResourcesPage: React.FC = () => {
       </section>
 
       {/* Living with Herpes Video Section */}
-      <section className="bg-white rounded-lg shadow-md p-8 mb-8">
+      <section className="bg-white rounded-lg shadow-md p-8 mb-8 border border-primary/10 hover:shadow-lg transition-shadow duration-300">
         <h2 className="text-2xl font-semibold text-gray-900 mb-4">Living with Herpes Video</h2>
         <div className="prose max-w-none text-gray-700 mb-6">
           <p>
@@ -134,7 +134,7 @@ const ResourcesPage: React.FC = () => {
       </section>
 
       {/* Additional Resources */}
-      <section className="bg-white rounded-lg shadow-md p-8">
+      <section className="bg-white rounded-lg shadow-md p-8 border border-primary/10 hover:shadow-lg transition-shadow duration-300">
         <h2 className="text-2xl font-semibold text-gray-900 mb-4">Additional Resources</h2>
         <div className="grid md:grid-cols-2 gap-6">
           <Link href="/forum" className="card hover:no-underline">

@@ -10,9 +10,7 @@ type ContactReason = 'consultation' | 'western_blot' | 'forum' | 'other';
 interface ContactForm {
   reason: ContactReason;
   name: string;
-  phone: string;
   email: string;
-  referralSource: string;
   message: string;
 }
 
@@ -23,9 +21,7 @@ const ContactPage: React.FC = () => {
   const [formData, setFormData] = useState<ContactForm>({
     reason: 'consultation',
     name: '',
-    phone: '',
     email: '',
-    referralSource: '',
     message: '',
   });
   const [errors, setErrors] = useState<Partial<Record<keyof ContactFormData, string>>>({});
@@ -119,11 +115,16 @@ const ContactPage: React.FC = () => {
             </Link>{' '}
             on this website.
           </p>
+          <div className="p-4 bg-yellow-50 border-l-4 border-yellow-400 my-6">
+            <p className="font-medium text-yellow-800">
+              Please note: We will not be able to respond to herpes questions sent through this contact form.
+              For herpes-related questions, please use our forum instead.
+            </p>
+          </div>
           <p className="mb-4">
             For any questions about Westover Heights services, including private consultation
             and information about the Herpes Western Blot Test, please fill out the contact
-            form below and we will get back to you. Please note, we will not be able to
-            respond to herpes questions sent through the contact form.
+            form below and we will get back to you.
           </p>
           <p className="mb-4">
             If you have something you want to fax us, our fax number is{' '}
@@ -149,7 +150,7 @@ const ContactPage: React.FC = () => {
               <option value="consultation">Private Consultation</option>
               <option value="western_blot">Western Blot Test</option>
               <option value="forum">Forum Concerns</option>
-              <option value="other-services">Other</option>
+              <option value="other">Other</option>
             </select>
             {errors.reason && (
               <p className="mt-1 text-sm text-red-600">{errors.reason}</p>
@@ -174,21 +175,6 @@ const ContactPage: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Phone Number
-            </label>
-            <input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className={`form-input ${errors.phone ? 'border-red-500' : ''}`}
-            />
-            {errors.phone && (
-              <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
               Email*
             </label>
             <input
@@ -205,29 +191,14 @@ const ContactPage: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Referral Source
-            </label>
-            <input
-              type="text"
-              value={formData.referralSource}
-              onChange={(e) => setFormData({ ...formData, referralSource: e.target.value })}
-              className={`form-input ${errors.referralSource ? 'border-red-500' : ''}`}
-            />
-            {errors.referralSource && (
-              <p className="mt-1 text-sm text-red-600">{errors.referralSource}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
               Message*
             </label>
             <textarea
               value={formData.message}
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-              className={`form-textarea ${errors.message ? 'border-red-500' : ''}`}
+              className={`form-textarea h-32 ${errors.message ? 'border-red-500' : ''}`}
               required
-            />
+            ></textarea>
             {errors.message && (
               <p className="mt-1 text-sm text-red-600">{errors.message}</p>
             )}
@@ -236,7 +207,7 @@ const ContactPage: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/80"
+            className="w-full bg-green-100 text-green-800 hover:bg-green-200 font-bold px-4 py-2 rounded-md shadow-sm hover:shadow transition-all duration-200 border border-green-300 disabled:opacity-70"
           >
             {isSubmitting ? 'Sending...' : 'Send Message'}
           </button>

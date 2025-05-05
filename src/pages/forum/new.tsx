@@ -5,7 +5,7 @@ import { supabase, updateCanPost } from '@/lib/supabase/client';
 import PaymentModal from '@/components/PaymentModal';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
-import { FaArrowLeft } from 'react-icons/fa';
+import { FaArrowLeft, FaSpinner } from 'react-icons/fa';
 
 export default function NewTopicPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -171,8 +171,6 @@ export default function NewTopicPage() {
           required
           className="form-select w-full"
         >
-          <option value="Testing & Diagnosis">Testing & Diagnosis</option>
-          <option value="Treatment Options">Treatment Options</option>
           <option value="General Questions">General Questions</option>
         </select>
       </div>
@@ -207,16 +205,22 @@ export default function NewTopicPage() {
         <button
           type="submit"
           disabled={loading}
-          className="btn-primary"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-100 text-green-800 hover:bg-green-200 font-bold rounded-md shadow-sm hover:shadow transition-all duration-200 border border-green-300"
         >
-          {loading ? 'Posting...' : (canPost ? 'Post Question' : 'Continue ($25 for 3 posts)')}
+          {loading ? (
+            <>
+              <FaSpinner className="animate-spin" /> Submitting...
+            </>
+          ) : (
+            'Submit Question'
+          )}
         </button>
       </div>
     </form>
   );
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-12 pt-16 animate-fade-in">
+    <div className="max-w-4xl mx-auto px-4 py-12 pt-16 animate-fade-in bg-gradient-to-b from-gray-200 to-gray-100">
       <Link
         href="/forum"
         className="inline-flex items-center text-gray-600 hover:text-primary mb-6"
@@ -226,7 +230,10 @@ export default function NewTopicPage() {
 
       <h1 className="text-3xl font-bold text-gray-900 mb-8">Ask a Question</h1>
 
-      {pageContent}
+      {/* Form container */}
+      <div className="bg-white rounded-lg shadow-md p-6 border border-primary/10 hover:shadow-lg transition-shadow duration-300">
+        {pageContent}
+      </div>
 
       {/* Single PaymentModal instance */}
       <PaymentModal

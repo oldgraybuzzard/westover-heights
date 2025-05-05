@@ -387,50 +387,8 @@ export default function ForumPage() {
   });
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12 pt-16 animate-fade-in">
-      {isExpertUser() ? (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-4xl font-bold text-gray-900">Expert Dashboard</h1>
-            <div className="flex items-center gap-4">
-              <div className="bg-primary/10 px-4 py-2 rounded-lg">
-                <span className="font-semibold text-primary">{counts.needsAttention}</span>
-                <span className="text-gray-600 ml-2">Topics need your expertise</span>
-              </div>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={showUnansweredOnly}
-                  onChange={(e) => setShowUnansweredOnly(e.target.checked)}
-                  className="form-checkbox text-primary"
-                />
-                <span className="text-gray-600">Show unanswered only</span>
-              </label>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-4 grid grid-cols-3 gap-4">
-            <div className="flex items-center gap-2 justify-center bg-green-50 p-3 rounded-lg">
-              <span className="font-semibold text-green-600">
-                {counts.awaitingResponse}
-              </span>
-              <span className="text-gray-600">Awaiting Response</span>
-            </div>
-            <div className="flex items-center gap-2 justify-center bg-blue-50 p-3 rounded-lg">
-              <span className="font-semibold text-blue-600">
-                {counts.answered}
-              </span>
-              <span className="text-gray-600">Answered</span>
-            </div>
-            <div className="flex items-center gap-2 justify-center bg-gray-50 p-3 rounded-lg">
-              <span className="font-semibold text-gray-600">
-                {counts.closed}
-              </span>
-              <span className="text-gray-600">Closed</span>
-            </div>
-          </div>
-        </div>
-      ) : (
+    <main className="max-w-4xl mx-auto px-4 py-12 pt-16 animate-fade-in bg-gradient-to-b from-gray-200 to-gray-100">
+      {!loading && (
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900">Herpes Forum</h1>
           <div className="flex items-center gap-4">
@@ -447,7 +405,7 @@ export default function ForumPage() {
             {(!user || !userRoles?.includes('EXPERT')) && (
               <Link
                 href="/forum/new"
-                className="btn-primary flex items-center gap-2"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-100 text-green-800 hover:bg-green-200 font-bold rounded-md shadow-sm hover:shadow transition-all duration-200 border border-green-300"
               >
                 <FaPlus /> New Question
               </Link>
@@ -457,7 +415,7 @@ export default function ForumPage() {
       )}
 
       {/* Categories filter */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div className="bg-white rounded-lg shadow-md p-4 mb-6 border border-primary/10 hover:shadow-lg transition-shadow duration-300">
         <div className="flex items-center gap-4">
           <FaFilter className="text-gray-400" />
           <select
@@ -465,8 +423,6 @@ export default function ForumPage() {
             defaultValue="all"
           >
             <option value="all">All Categories</option>
-            <option value="testing">Testing & Diagnosis</option>
-            <option value="treatment">Treatment Options</option>
             <option value="general">General Questions</option>
           </select>
         </div>
@@ -496,8 +452,6 @@ export default function ForumPage() {
             className="p-2 border rounded-lg"
           >
             <option value="all">All Categories</option>
-            <option value="testing">Testing & Diagnosis</option>
-            <option value="treatment">Treatment Options</option>
             <option value="general">General Questions</option>
           </select>
         </div>
@@ -515,10 +469,11 @@ export default function ForumPage() {
             <div
               key={topic.id}
               onClick={() => handleTopicClick(topic.id)}
-              className={`cursor-pointer bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow ${topic.status === 'OPEN' ? 'border-l-4 border-primary' :
+              className={`cursor-pointer bg-white rounded-lg shadow-md p-6 mb-4 border border-primary/10 hover:shadow-lg transition-shadow duration-300 ${
+                topic.status === 'OPEN' ? 'border-l-4 border-primary' :
                 topic.status === 'ANSWERED' ? 'border-l-4 border-green-500' :
-                  'border-l-4 border-gray-300'
-                }`}
+                'border-l-4 border-gray-300'
+              }`}
             >
               <Link href={`/forum/${topic.id}`}>
                 <div className="flex justify-between items-start">
@@ -544,6 +499,6 @@ export default function ForumPage() {
             </div>
           ))}
       </div>
-    </div>
+    </main>
   );
 } 

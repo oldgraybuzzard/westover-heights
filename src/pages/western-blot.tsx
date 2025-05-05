@@ -4,11 +4,11 @@ import { FaVideo, FaFlask, FaDollarSign, FaCalendarAlt } from 'react-icons/fa';
 
 const WesternBlotPage: React.FC = () => {
   return (
-    <main className="max-w-4xl mx-auto px-4 py-12 pt-16 animate-fade-in">
+    <main className="max-w-4xl mx-auto px-4 py-12 pt-16 animate-fade-in bg-gradient-to-b from-gray-200 to-gray-100">
       <h1 className="text-4xl font-bold text-gray-900 mb-6">Western Blot Testing & Video Consultation</h1>
 
       {/* Introduction */}
-      <section className="bg-white rounded-lg shadow-md p-8 mb-8">
+      <section className="bg-white rounded-lg shadow-md p-8 mb-8 border border-primary/10 hover:shadow-lg transition-shadow duration-300">
         <div className="prose max-w-none text-gray-700">
           <p className="mb-4">
             STD experts agree that the herpes western blot is by far the best confirmatory antibody test. The <a className="text-blue-500" href='https://www.cdc.gov/std/treatment-guidelines/herpes.htm'>CDC</a> and FDA recommend confirmatory testing for people who get low positive <a className='text-blue-500' href='https://www.webmd.com/a-to-z-guides/immunoglobulin-test'>IgG</a> results.  People with low positive 'IgG results and people who test positive but have no symptoms should consider a confirmatory test as well. We can assist you to get the western blot if you are willing to be part of a research study we are doing. The study compares the accuracy of IgG test results with gold standard western blot results.  Participating would simply mean allowing us to include IgG and western blot results in our research study data base, anonymously.  No names,
@@ -72,7 +72,7 @@ const WesternBlotPage: React.FC = () => {
             <div>
               <h3 className="font-semibold text-lg mb-2">Schedule a Consultation</h3>
               <p className="text-gray-700">
-                Set up an appointment via <a className="text-blue-500" href="https://evisit.com/...">eVisit</a> to discuss your situation and receive a prescription for the herpes western blot test. You'll need to create a new account on eVisit. This initial consultation is required as part of
+                Set up an appointment via <a className="text-blue-500" href="https://app.evisit.com/ui/login/login?practice=westoverheightsclinic">eVisit</a> to discuss your situation and receive a prescription for the herpes western blot test. You'll need to create a new account on eVisit. This initial consultation is required as part of
                 nursing standard of care guidelines.
               </p>
             </div>
@@ -85,7 +85,7 @@ const WesternBlotPage: React.FC = () => {
             <div>
               <h3 className="font-semibold text-lg mb-2">Request Test Kit</h3>
               <p className="text-gray-700">
-                Contact the <a className="text-blue-500" href="https://dlmp.uw.edu/patient-care/client-patient-services">University of Washington</a> at 206-520-4600 to request your herpes westernblot kit.
+                Contact the <a className="text-blue-500" href="https://dlmp.uw.edu/patient-care/client-patient-services">University of Washington</a> at 206-685-6066 to request your herpes westernblot kit.
               </p>
             </div>
           </div>
@@ -97,7 +97,7 @@ const WesternBlotPage: React.FC = () => {
             <div>
               <h3 className="font-semibold text-lg mb-2">Blood Draw & Shipping</h3>
               <p className="text-gray-700">
-                Visit an <a className="text-blue-500" href="https://www.anylabtestnow.com/">AnyLabTestNow</a> location or an  AnyLabTestNow location for blood draw and shipping services. Fees typically
+                Visit an <a className="text-blue-500" href="https://www.anylabtestnow.com/">AnyLabTestNow</a> or <a className="text-blue-500" href="https://www.arcpointlabs.com/">ArcPoint Labs</a> location for blood draw and shipping services. Fees typically
                 range from $40-50 plus shipping costs.
               </p>
             </div>
@@ -121,10 +121,10 @@ const WesternBlotPage: React.FC = () => {
       <section className="bg-primary/10 rounded-lg p-8 text-center">
         <h2 className="text-2xl font-semibold text-gray-900 mb-4">Ready to Get Started?</h2>
         <a
-          href="https://evisit.com/..."  // Add actual eVisit URL
+          href="https://app.evisit.com/ui/login/login?practice=westoverheightsclinic"
           target="_blank"
           rel="noopener noreferrer"
-          className="btn-primary inline-flex items-center gap-2"
+          className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-green-100 text-green-800 hover:bg-green-200 font-bold text-lg rounded-md shadow-sm hover:shadow transition-all duration-200 border border-green-300"
         >
           <FaCalendarAlt /> Schedule Appointment
         </a>

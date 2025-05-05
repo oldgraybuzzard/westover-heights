@@ -22,7 +22,7 @@ const HomePage: React.FC = () => {
   }
 
   return (
-    <main className="animate-fade-in">
+    <main className="animate-fade-in bg-gray-100">
       {/* Prominent Announcement Banner */}
       {/* <div className="bg-amber-500 text-white py-4 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -70,15 +70,15 @@ const HomePage: React.FC = () => {
             Expert Care for Herpes Management
           </h1>
           <p className="text-xl mb-8 max-w-2xl font-semibold">
-            Empower Yourself—Get the Guidance You Need. With over 35 years of specialized
+            Empower Yourself—Get the Guidance You Need. With over 43 years of specialized
             experience, we provide comprehensive care, testing, and consultation services
             for herpes and other STIs.
           </p>
           <div className="flex gap-4">
-            <Link href="/western-blot" className="btn-primary bg-white text-primary-500">
+            <Link href="/western-blot" className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-100 text-green-800 hover:bg-green-200 font-bold rounded-md shadow-sm hover:shadow transition-all duration-200 border border-green-300">
               Get Western Blot Testing
             </Link>
-            <Link href="/forum" className="btn-secondary bg-white text-primary-500">
+            <Link href="/forum" className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-100 text-green-800 hover:bg-green-200 font-bold rounded-md shadow-sm hover:shadow transition-all duration-200 border border-green-300">
               Ask a Question
             </Link>
           </div>
@@ -120,7 +120,7 @@ const HomePage: React.FC = () => {
             $125 for 20 minutes
           </div>
           <Link
-            href="/consultation"
+            href="/contact"
             className="btn-primary w-full"
           >
             Book Consultation
@@ -140,7 +140,7 @@ const HomePage: React.FC = () => {
             Contact for details
           </div>
           <Link
-            href="/research"
+            href="/western-blot"
             className="btn-primary w-full"
           >
             Learn More

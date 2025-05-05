@@ -133,7 +133,7 @@ export default function TopicDetailPage() {
   if (!topic) return <div>Topic not found</div>;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-12 pt-16 animate-fade-in">
+    <main className="max-w-4xl mx-auto px-4 py-12 pt-16 animate-fade-in bg-gradient-to-b from-gray-200 to-gray-100">
       <Link
         href="/forum"
         className="inline-flex items-center text-gray-600 hover:text-primary mb-6"
@@ -141,7 +141,7 @@ export default function TopicDetailPage() {
         <FaArrowLeft className="mr-2" /> Back to Forum
       </Link>
 
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+      <div className="bg-white rounded-lg shadow-md p-6 mb-8 border border-primary/10 hover:shadow-lg transition-shadow duration-300">
         <div className="flex justify-between items-start mb-4">
           <h1 className="text-3xl font-bold text-gray-900">{topic.title}</h1>
           <span className={`px-3 py-1 rounded-full text-sm ${topic.status === 'OPEN' ? 'bg-green-100 text-green-800' :
@@ -202,7 +202,7 @@ export default function TopicDetailPage() {
         {replies.map((reply) => (
           <div
             key={reply.id}
-            className="bg-white rounded-lg shadow-sm p-6"
+            className="bg-white rounded-lg shadow-md p-6 border border-primary/10 hover:shadow-lg transition-shadow duration-300"
           >
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-2">
@@ -224,7 +224,7 @@ export default function TopicDetailPage() {
         {topic.status !== 'CLOSED' ? (
           user ? (
             canReply ? (
-              <form onSubmit={handleReply} className="bg-white rounded-lg shadow-sm p-6">
+              <form onSubmit={handleReply} className="bg-white rounded-lg shadow-md p-6 border border-primary/10 hover:shadow-lg transition-shadow duration-300">
                 <h3 className="text-xl font-semibold mb-4">Post a Reply</h3>
                 <p className="text-gray-600 mb-4">
                   You have {2 - replyCount} replies remaining for this topic
@@ -261,7 +261,7 @@ export default function TopicDetailPage() {
               </div>
             )
           ) : (
-            <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+            <div className="bg-white rounded-lg shadow-md p-6 border border-primary/10 hover:shadow-lg transition-shadow duration-300 text-center">
               <p className="text-gray-600 mb-4">Please sign in to reply</p>
               <button
                 onClick={() => setShowSignInModal(true)}
@@ -282,6 +282,6 @@ export default function TopicDetailPage() {
         isOpen={showSignInModal}
         onClose={() => setShowSignInModal(false)}
       />
-    </div>
+    </main>
   );
 } 

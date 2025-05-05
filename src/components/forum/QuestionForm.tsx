@@ -72,8 +72,6 @@ export default function QuestionForm({ onPaymentRequired, canPost }: QuestionFor
           required
           className="form-select w-full"
         >
-          <option value="Testing & Diagnosis">Testing & Diagnosis</option>
-          <option value="Treatment Options">Treatment Options</option>
           <option value="General Questions">General Questions</option>
         </select>
       </div>
