@@ -44,6 +44,13 @@ export async function middleware(request: NextRequest) {
       }
     }
 
+    // Handle password reset redirects
+    if (path === '/' && request.nextUrl.searchParams.has('token')) {
+      const token = request.nextUrl.searchParams.get('token');
+      console.log('Redirecting token from homepage to reset-password page:', token);
+      return NextResponse.redirect(new URL(`/reset-password?token=${token}`, request.url));
+    }
+
     return res;
   } catch (e) {
     console.error('Middleware error:', e);

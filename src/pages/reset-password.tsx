@@ -25,9 +25,12 @@ export default function ResetPassword() {
   const [token, setToken] = useState<string | undefined>(urlToken as string | undefined);
 
   useEffect(() => {
-    // Set token from URL parameter
+    // Set token from URL parameter and log for debugging
     if (urlToken && typeof urlToken === 'string') {
+      console.log('Token received from URL:', urlToken);
       setToken(urlToken);
+    } else {
+      console.log('No token found in URL parameters');
     }
     
     // Handle development mode
@@ -45,6 +48,7 @@ export default function ResetPassword() {
 
     // Only proceed with validation if we have a token
     if (!token) {
+      console.log('No token available for validation');
       setTokenChecked(true);
       return;
     }

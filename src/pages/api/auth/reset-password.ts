@@ -104,7 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const origin = req.headers.origin || process.env.NEXT_PUBLIC_SITE_URL;
     const resetUrl = `${origin}/reset-password?token=${resetToken}`;
 
-    console.log('Generated reset URL:', resetUrl); // Add this for debugging
+    console.log('Generated reset URL:', resetUrl); // For debugging
     console.log('Token stored in database:', {
       user_id: user.id,
       token: resetToken,
@@ -143,9 +143,9 @@ async function sendResetEmail(email: string, resetUrl: string) {
                 Email: email,
               },
             ],
-            Subject: 'Reset Your Password',
+            Subject: 'Reset Your Password - Westover Heights',
             TextPart: `
-Reset Your Password
+Reset Your Password - Westover Heights
 
 Please click the link below to reset your password:
 ${resetUrl}
@@ -155,22 +155,32 @@ This link will expire in 1 hour.
 If you did not request this password reset, please ignore this email.
             `,
             HTMLPart: `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h2 style="color: #333; margin-bottom: 20px;">Reset Your Password</h2>
-  <p style="margin-bottom: 15px;">Please click the button below to reset your password:</p>
-  <div style="text-align: center; margin: 25px 0;">
-    <a href="${resetUrl}" style="background-color: #4a90e2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">Reset Password</a>
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+  <div style="text-align: center; margin-bottom: 20px;">
+    <h2 style="color: #333; margin-bottom: 10px;">Reset Your Password</h2>
+    <p style="color: #666; margin-bottom: 20px;">You requested a password reset for your Westover Heights account</p>
   </div>
-  <p style="margin-bottom: 10px;">Or copy and paste this URL into your browser:</p>
-  <p style="margin-bottom: 20px; word-break: break-all; color: #4a90e2;">${resetUrl}</p>
-  <p style="margin-bottom: 10px;">This link will expire in 1 hour.</p>
-  <p style="color: #777;">If you did not request this password reset, please ignore this email.</p>
+  
+  <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+    <p style="margin-bottom: 15px; font-weight: bold;">Please click the button below to reset your password:</p>
+    <div style="text-align: center; margin: 25px 0;">
+      <a href="${resetUrl}" style="background-color: #4a90e2; color: white; padding: 12px 25px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Reset My Password</a>
+    </div>
+    <p style="margin-top: 15px; font-size: 13px;">If the button doesn't work, copy and paste this URL into your browser:</p>
+    <p style="margin-bottom: 0; word-break: break-all; color: #4a90e2; font-size: 13px;">${resetUrl}</p>
+  </div>
+  
+  <div style="font-size: 12px; color: #777; margin-top: 20px;">
+    <p>This link will expire in 1 hour.</p>
+    <p>If you did not request this password reset, please ignore this email.</p>
+  </div>
 </div>
             `,
           },
         ],
       });
     
+    console.log('Reset email sent successfully to:', email);
     return { error: null };
   } catch (error) {
     console.error('Mailjet error:', error);
