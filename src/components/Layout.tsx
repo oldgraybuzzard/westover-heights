@@ -1,26 +1,22 @@
-import React from 'react';
-import Navbar from './Navbar';
+import Header from './Header';
 import Footer from './Footer';
-import { SpeedInsights } from "@vercel/speed-insights/next"
-import { Analytics } from "@vercel/analytics/react"
+import { Toaster } from 'react-hot-toast';
+import TestModeIndicator from './TestModeIndicator';
 
 interface LayoutProps {
   children: React.ReactNode;
-  isHomePage: boolean;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, isHomePage }) => {
+export default function Layout({ children }: LayoutProps) {
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <div className="flex-grow">
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      <main className="flex-grow">
         {children}
-      </div>
+      </main>
       <Footer />
-      <SpeedInsights />
-      <Analytics />
+      <Toaster position="top-right" />
+      <TestModeIndicator />
     </div>
   );
-};
-
-export default Layout; 
+} 
