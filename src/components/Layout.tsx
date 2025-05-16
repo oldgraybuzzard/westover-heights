@@ -1,5 +1,5 @@
-import Header from './Header';
-import Footer from './Footer';
+import Header from './layout/Header';
+import Footer from './layout/Footer';
 import { Toaster } from 'react-hot-toast';
 import TestModeIndicator from './TestModeIndicator';
 
