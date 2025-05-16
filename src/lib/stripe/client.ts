@@ -1,10 +1,14 @@
 import { loadStripe } from '@stripe/stripe-js';
 
-// Since we only have live keys, we'll use them for all environments
-// but we'll add a warning in development mode
-const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_LIVE;
+// Get the publishable key with fallback for build time
+const stripePublishableKey = 
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_LIVE || 
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 
+  // During build time, return a placeholder that will be replaced at runtime
+  (typeof window === 'undefined' ? 'pk_placeholder_for_build' : '');
 
-if (!stripePublishableKey) {
+// Only throw an error at runtime, not during build
+if (typeof window !== 'undefined' && !stripePublishableKey) {
   throw new Error('Missing Stripe publishable key');
 }
 
@@ -16,4 +20,11 @@ if (process.env.NODE_ENV !== 'production') {
   );
 }
 
-export const stripePromise = loadStripe(stripePublishableKey);
+// Initialize Stripe only in browser environment
+let stripePromise: ReturnType<typeof loadStripe> | null = null;
+
+if (typeof window !== 'undefined' && stripePublishableKey !== 'pk_placeholder_for_build' && stripePublishableKey !== '') {
+  stripePromise = loadStripe(stripePublishableKey);
+}
+
+export { stripePromise };
