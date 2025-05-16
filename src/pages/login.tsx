@@ -26,6 +26,15 @@ export default function LoginPage() {
       const url = new URL(window.location.href);
       url.searchParams.delete('verified');
       window.history.replaceState({}, '', url.toString());
+    } else if (router.query.verified === 'attempted') {
+      toast.success('Verification process started. Please log in to continue.', {
+        duration: 5000,
+      });
+      
+      // Remove the verified parameter from the URL without refreshing the page
+      const url = new URL(window.location.href);
+      url.searchParams.delete('verified');
+      window.history.replaceState({}, '', url.toString());
     }
   }, [router.query.verified]);
 

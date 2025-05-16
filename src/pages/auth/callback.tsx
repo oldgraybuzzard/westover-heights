@@ -11,6 +11,7 @@ export default function AuthCallbackPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [errorCode, setErrorCode] = useState('');
   const [processingTime, setProcessingTime] = useState(0);
+  const [debugInfo, setDebugInfo] = useState<string>('');
 
   useEffect(() => {
     // Log for debugging
@@ -21,8 +22,11 @@ export default function AuthCallbackPage() {
     const timeoutId = setTimeout(() => {
       if (verificationStatus === 'loading') {
         console.error('Verification timed out after 15 seconds');
-        setErrorMessage('Verification is taking longer than expected. Please try again or contact support.');
+        setErrorMessage('Verification is taking longer than expected. Please try logging in directly.');
         setVerificationStatus('error');
+        
+        // Add debug info
+        setDebugInfo(`Code: ${router.query.code}, Browser: ${navigator.userAgent}`);
       }
     }, 15000);
 
@@ -35,7 +39,7 @@ export default function AuthCallbackPage() {
       clearTimeout(timeoutId);
       clearInterval(timerId);
     };
-  }, [verificationStatus]);
+  }, [verificationStatus, router.query]);
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -66,7 +70,33 @@ export default function AuthCallbackPage() {
         console.log('Processing auth code:', code);
         
         try {
-          // Exchange the code for a session (this doesn't automatically log the user in)
+          // Safari-specific workaround: try to directly redirect to login
+          // if we detect Safari and the code looks valid
+          const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+          if (isSafari && code.length > 10) {
+            console.log('Safari detected, attempting direct login redirect');
+            
+            // Try the exchange in the background but don't wait for it
+            supabase.auth.exchangeCodeForSession(code)
+              .then(({ data, error }) => {
+                console.log('Background exchange result:', { data, error });
+              })
+              .catch(err => {
+                console.error('Background exchange error:', err);
+              });
+            
+            // After a short delay, redirect to login
+            setTimeout(() => {
+              console.log('Redirecting to login (Safari workaround)');
+              router.push('/login?verified=attempted');
+            }, 2000);
+            
+            // Update UI to show success
+            setVerificationStatus('success');
+            return;
+          }
+          
+          // Standard flow for other browsers
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           
           if (error) {
@@ -87,11 +117,13 @@ export default function AuthCallbackPage() {
           console.error('Supabase error:', error);
           setErrorMessage('Error processing verification');
           setVerificationStatus('error');
+          setDebugInfo(error instanceof Error ? error.message : String(error));
         }
       } catch (error) {
         console.error('Auth callback error:', error);
         setErrorMessage('An error occurred during verification');
         setVerificationStatus('error');
+        setDebugInfo(error instanceof Error ? error.message : String(error));
       }
     };
 
@@ -118,10 +150,7 @@ export default function AuthCallbackPage() {
                   <Link href="/login" className="text-primary hover:underline">
                     logging in
                   </Link>{' '}
-                  or{' '}
-                  <Link href="/resend-verification" className="text-primary hover:underline">
-                    requesting a new verification link
-                  </Link>.
+                  directly.
                 </p>
               )}
             </div>
@@ -134,8 +163,8 @@ export default function AuthCallbackPage() {
   if (verificationStatus === 'error') {
     // Customize error message based on error code
     let errorTitle = 'Verification Failed';
-    let errorInstructions = 'Please try again or contact support if the problem persists.';
-    let actionText = 'Return to Login';
+    let errorInstructions = 'Please try logging in directly. If you cannot log in, you may need to request a new verification email.';
+    let actionText = 'Go to Login';
     let actionLink = '/login';
     
     if (errorCode === 'otp_expired' || errorMessage.includes('expired')) {
@@ -160,10 +189,19 @@ export default function AuthCallbackPage() {
               {actionText}
             </Link>
             
-            <Link href="/login" className="inline-block text-gray-600 hover:text-gray-900 px-4 py-2 rounded-md font-medium transition-colors">
-              Go to Login
-            </Link>
+            {actionLink !== '/login' && (
+              <Link href="/login" className="inline-block text-gray-600 hover:text-gray-900 px-4 py-2 rounded-md font-medium transition-colors">
+                Go to Login
+              </Link>
+            )}
           </div>
+          
+          {debugInfo && (
+            <div className="mt-8 p-3 bg-gray-100 rounded-md text-xs text-left text-gray-500 overflow-auto">
+              <p className="font-medium mb-1">Debug information:</p>
+              <pre>{debugInfo}</pre>
+            </div>
+          )}
         </div>
       </div>
     );
