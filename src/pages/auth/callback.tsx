@@ -10,12 +10,34 @@ export default function AuthCallbackPage() {
   const [verificationStatus, setVerificationStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState('');
   const [errorCode, setErrorCode] = useState('');
+  const [processingTime, setProcessingTime] = useState(0);
 
   useEffect(() => {
     // Log for debugging
     console.log('Auth callback page loaded');
     console.log('URL parameters:', router.query);
 
+    // Add a timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      if (verificationStatus === 'loading') {
+        console.error('Verification timed out after 15 seconds');
+        setErrorMessage('Verification is taking longer than expected. Please try again or contact support.');
+        setVerificationStatus('error');
+      }
+    }, 15000);
+
+    // Add a timer to show processing time
+    const timerId = setInterval(() => {
+      setProcessingTime(prev => prev + 1);
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(timerId);
+    };
+  }, [verificationStatus]);
+
+  useEffect(() => {
     const handleAuthCallback = async () => {
       try {
         // Check for error parameters first
@@ -43,19 +65,29 @@ export default function AuthCallbackPage() {
 
         console.log('Processing auth code:', code);
         
-        // Exchange the code for a session (this doesn't automatically log the user in)
-        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-        
-        if (error) {
-          console.error('Error exchanging code for session:', error);
-          setErrorMessage('Verification failed: ' + error.message);
-          setVerificationStatus('error');
-          return;
-        }
+        try {
+          // Exchange the code for a session (this doesn't automatically log the user in)
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          
+          if (error) {
+            console.error('Error exchanging code for session:', error);
+            setErrorMessage('Verification failed: ' + error.message);
+            setVerificationStatus('error');
+            return;
+          }
 
-        console.log('Verification successful');
-        setVerificationStatus('success');
-        
+          console.log('Verification successful, session data:', data);
+          setVerificationStatus('success');
+          
+          // Add a small delay before redirecting to ensure state updates
+          setTimeout(() => {
+            router.push('/login?verified=true');
+          }, 2000);
+        } catch (error) {
+          console.error('Supabase error:', error);
+          setErrorMessage('Error processing verification');
+          setVerificationStatus('error');
+        }
       } catch (error) {
         console.error('Auth callback error:', error);
         setErrorMessage('An error occurred during verification');
@@ -63,19 +95,37 @@ export default function AuthCallbackPage() {
       }
     };
 
-    // Only run the callback handler if we have URL parameters
+    // Only run the callback handler if we have URL parameters and router is ready
     if (router.isReady && Object.keys(router.query).length > 0) {
       handleAuthCallback();
     }
-  }, [router.isReady, router.query]);
+  }, [router.isReady, router.query, router]);
 
   if (verificationStatus === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white">
-        <div className="text-center">
+        <div className="text-center max-w-md px-4">
           <FaSpinner className="animate-spin text-4xl text-primary mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-2">Verifying your email</h2>
-          <p className="text-gray-600">Please wait while we verify your email address...</p>
+          <p className="text-gray-600 mb-4">Please wait while we verify your email address...</p>
+          
+          {processingTime > 5 && (
+            <div className="mt-4 text-sm text-gray-500">
+              <p>This is taking longer than expected. Please wait a moment...</p>
+              {processingTime > 10 && (
+                <p className="mt-2">
+                  If verification doesn't complete soon, you can try{' '}
+                  <Link href="/login" className="text-primary hover:underline">
+                    logging in
+                  </Link>{' '}
+                  or{' '}
+                  <Link href="/resend-verification" className="text-primary hover:underline">
+                    requesting a new verification link
+                  </Link>.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );

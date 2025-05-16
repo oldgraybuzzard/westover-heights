@@ -84,10 +84,10 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // Redirect from auth callback to login with verified parameter
-    if (path.startsWith('/auth/callback') && request.nextUrl.searchParams.has('verified')) {
-      return NextResponse.redirect(new URL('/login?verified=true', request.url));
-    }
+    // Remove this problematic code block that uses verificationStatus
+    // if (path.startsWith('/auth/callback') && verificationStatus === 'success') {
+    //   return NextResponse.redirect(new URL('/login?verified=true', request.url));
+    // }
 
     return res;
   } catch (e) {
