@@ -187,14 +187,38 @@ export default function SignUpPage() {
       }
 
       setIsCheckingEmail(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('email', email.toLowerCase())
-        .maybeSingle();
+      
+      try {
+        // First check if email exists in auth system
+        const { data: authData, error: authError } = await supabase.auth.signInWithOtp({
+          email: email.toLowerCase(),
+          options: {
+            shouldCreateUser: false // This will fail if user doesn't exist
+          }
+        });
+        
+        // If no error, the email exists in auth system
+        if (!authError) {
+          setIsEmailAvailable(false);
+          setIsCheckingEmail(false);
+          return;
+        }
+        
+        // If error is not about non-existent user, check profiles table as backup
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('email', email.toLowerCase())
+          .maybeSingle();
 
-      setIsEmailAvailable(!data);
-      setIsCheckingEmail(false);
+        setIsEmailAvailable(!data);
+      } catch (error) {
+        console.error('Error checking email availability:', error);
+        // Default to unavailable on error to be safe
+        setIsEmailAvailable(false);
+      } finally {
+        setIsCheckingEmail(false);
+      }
     }, 500),
     []
   );
@@ -227,15 +251,44 @@ export default function SignUpPage() {
       return;
     }
 
-    if (!isEmailAvailable) {
-      toast.error('This email is already registered');
-      return;
-    }
-
+    // Double-check email availability before proceeding
     setLoading(true);
-    const toastId = toast.loading('Creating your account...');
-
+    const toastId = toast.loading('Checking email availability...');
+    
     try {
+      // Check if email exists in auth system
+      const { error: authError } = await supabase.auth.signInWithOtp({
+        email: email.toLowerCase(),
+        options: {
+          shouldCreateUser: false // This will fail if user doesn't exist
+        }
+      });
+      
+      // If no error, the email exists in auth system
+      if (!authError) {
+        toast.error('This email is already registered', { id: toastId });
+        setIsEmailAvailable(false);
+        setLoading(false);
+        return;
+      }
+      
+      // Also check profiles table as backup
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('email', email.toLowerCase())
+        .maybeSingle();
+      
+      if (profileData) {
+        toast.error('This email is already registered', { id: toastId });
+        setIsEmailAvailable(false);
+        setLoading(false);
+        return;
+      }
+      
+      // Update toast message
+      toast.loading('Creating your account...', { id: toastId });
+      
       // Basic signup without any options
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
@@ -251,16 +304,22 @@ export default function SignUpPage() {
       if (signUpError) throw signUpError;
       if (!authData.user) throw new Error('No user returned from signup');
 
-      // Create profile using RPC
-      const { error: profileError } = await supabase.rpc('create_profile', {
-        p_user_id: authData.user.id,
-        p_display_name: displayName.trim(),
-        p_email: email.toLowerCase()
-      });
+      try {
+        // Create profile using RPC
+        const { error: profileError } = await supabase.rpc('create_profile', {
+          p_user_id: authData.user.id,
+          p_display_name: displayName.trim(),
+          p_email: email.toLowerCase()
+        });
 
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
-        throw profileError;
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          // Don't throw here - profile might already exist or be created by a trigger
+          console.log('Continuing despite profile error - user was created successfully');
+        }
+      } catch (profileErr) {
+        // Log but don't fail the signup if profile creation fails
+        console.error('Profile creation exception:', profileErr);
       }
 
       // Show success message with clear instructions

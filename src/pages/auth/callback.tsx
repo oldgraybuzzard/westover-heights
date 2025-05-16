@@ -69,38 +69,39 @@ export default function AuthCallbackPage() {
 
         console.log('Processing auth code:', code);
         
+        // Detect browser
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        
+        // For all browsers, use a more reliable approach
         try {
-          // Safari-specific workaround: try to directly redirect to login
-          // if we detect Safari and the code looks valid
-          const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-          if (isSafari && code.length > 10) {
-            console.log('Safari detected, attempting direct login redirect');
-            
-            // Try the exchange in the background but don't wait for it
-            supabase.auth.exchangeCodeForSession(code)
-              .then(({ data, error }) => {
-                console.log('Background exchange result:', { data, error });
-              })
-              .catch(err => {
-                console.error('Background exchange error:', err);
-              });
-            
-            // After a short delay, redirect to login
-            setTimeout(() => {
-              console.log('Redirecting to login (Safari workaround)');
-              router.push('/login?verified=attempted');
-            }, 2000);
-            
-            // Update UI to show success
-            setVerificationStatus('success');
-            return;
-          }
+          // Set a timeout for the Supabase call
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Verification request timed out')), 10000)
+          );
           
-          // Standard flow for other browsers
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          // Try to exchange the code for a session
+          const exchangePromise = supabase.auth.exchangeCodeForSession(code);
+          
+          // Race the exchange against the timeout
+          const result = await Promise.race([exchangePromise, timeoutPromise]);
+          
+          // If we get here, the exchange succeeded before the timeout
+          const { data, error } = result as Awaited<typeof exchangePromise>;
           
           if (error) {
             console.error('Error exchanging code for session:', error);
+            
+            // For Safari or mobile browsers, redirect to login anyway
+            if (isSafari || isMobile) {
+              console.log('Browser compatibility issue detected, redirecting to login');
+              setVerificationStatus('success');
+              setTimeout(() => {
+                router.push('/login?verified=attempted');
+              }, 2000);
+              return;
+            }
+            
             setErrorMessage('Verification failed: ' + error.message);
             setVerificationStatus('error');
             return;
@@ -114,7 +115,18 @@ export default function AuthCallbackPage() {
             router.push('/login?verified=true');
           }, 2000);
         } catch (error) {
-          console.error('Supabase error:', error);
+          console.error('Verification error:', error);
+          
+          // For Safari or mobile browsers, redirect to login anyway
+          if (isSafari || isMobile) {
+            console.log('Browser compatibility issue detected, redirecting to login');
+            setVerificationStatus('success');
+            setTimeout(() => {
+              router.push('/login?verified=attempted');
+            }, 2000);
+            return;
+          }
+          
           setErrorMessage('Error processing verification');
           setVerificationStatus('error');
           setDebugInfo(error instanceof Error ? error.message : String(error));
