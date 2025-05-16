@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 import { useAuth } from '@/contexts/AuthContext';
+import { updateCanPost } from '@/lib/supabase/client';
 import { toast } from 'react-hot-toast';
+import { supabase } from '@/lib/supabase/client';
 
 interface PaymentFormProps {
   amount: number;
@@ -44,6 +46,12 @@ export default function PaymentForm({ amount, onPaymentSuccess, onPaymentError }
     console.log('Processing payment...');
 
     try {
+      // Ensure we have the latest user session
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        throw new Error('Your session has expired. Please log in again.');
+      }
+
       // Confirm the payment
       const result = await stripe.confirmPayment({
         elements,
@@ -67,8 +75,16 @@ export default function PaymentForm({ amount, onPaymentSuccess, onPaymentError }
 
       if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
         console.log('Payment succeeded:', result.paymentIntent.id);
-        await onPaymentSuccess(result.paymentIntent.id);
-        toast.success('Payment successful!');
+        
+        try {
+          // Try to update user permissions immediately if payment succeeded without redirect
+          await onPaymentSuccess(result.paymentIntent.id);
+          toast.success('Payment successful!');
+        } catch (err) {
+          console.error('Error updating permissions:', err);
+          // If updating permissions fails, redirect to success page to try again
+          window.location.href = `${window.location.origin}/payment-success?payment_intent=${result.paymentIntent.id}&payment_intent_client_secret=${result.paymentIntent.client_secret}`;
+        }
       } else if (result.paymentIntent) {
         console.log('Payment status:', result.paymentIntent.status);
         // Handle other payment statuses

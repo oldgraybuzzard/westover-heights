@@ -20,8 +20,14 @@ export default function PaymentSuccessPage() {
     const verifyPayment = async () => {
       try {
         if (!user) {
-          setStatus('error');
-          setMessage('User session not found. Please log in again.');
+          console.log('No user found, waiting for authentication...');
+          // Wait a bit for auth to initialize before failing
+          setTimeout(() => {
+            if (!user) {
+              setStatus('error');
+              setMessage('User session not found. Please log in again.');
+            }
+          }, 3000);
           return;
         }
 
@@ -58,6 +64,7 @@ export default function PaymentSuccessPage() {
         switch (paymentIntent.status) {
           case 'succeeded':
             try {
+              console.log('Updating user permissions for user ID:', user.id);
               // Update user's posting ability
               await updateCanPost(user.id, paymentIntent.id);
               setStatus('success');
@@ -69,6 +76,9 @@ export default function PaymentSuccessPage() {
               console.error('Error updating user permissions:', error);
               setStatus('error');
               setMessage('Payment successful, but there was an error updating your account. Please contact support.');
+              
+              // Show error toast
+              toast.error('Error updating account. Please contact support.');
             }
             break;
             

@@ -177,28 +177,70 @@ export async function getUserReplyCount(topicId: string, userId: string) {
 }
 
 export async function updateCanPost(userId: string, paymentIntentId?: string) {
-  const { data: session } = await supabase.auth.getSession();
-  if (!session.session) throw new Error('No session');
-
-  // First create payment history record
-  const { error: historyError } = await supabase
-    .from('payment_history')
-    .insert({
-      user_id: userId,
-      payment_intent_id: paymentIntentId || 'manual',
-      amount: 2500,
-      posts_remaining: 3,
-      status: 'active'
-    });
-
-  if (historyError) throw historyError;
-
-  // Then grant posting permission
-  const { error } = await supabase.rpc('grant_posting_permission', {
-    session_id: session.session.access_token
-  });
+  console.log('Updating can_post for user:', userId, 'with payment:', paymentIntentId);
+  
+  // Get the current session
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  
+  if (sessionError) {
+    console.error('Session error:', sessionError);
+    throw new Error(`Authentication error: ${sessionError.message}`);
+  }
+  
+  if (!sessionData.session) {
+    console.error('No active session found');
+    // Try to refresh the session
+    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
     
-  if (error) throw error;
+    if (refreshError || !refreshData.session) {
+      console.error('Failed to refresh session:', refreshError);
+      throw new Error('Your session has expired. Please log in again.');
+    }
+    
+    console.log('Session refreshed successfully');
+  }
+  
+  const session = sessionData.session || (await supabase.auth.getSession()).data.session;
+  
+  if (!session) {
+    throw new Error('No active session found after refresh attempt');
+  }
+
+  try {
+    // First create payment history record
+    console.log('Creating payment history record...');
+    const { error: historyError } = await supabase
+      .from('payment_history')
+      .insert({
+        user_id: userId,
+        payment_intent_id: paymentIntentId || 'manual',
+        amount: 2500,
+        posts_remaining: 3,
+        status: 'active'
+      });
+
+    if (historyError) {
+      console.error('Payment history error:', historyError);
+      throw historyError;
+    }
+
+    // Then grant posting permission
+    console.log('Granting posting permission...');
+    const { error } = await supabase.rpc('grant_posting_permission', {
+      session_id: session.access_token
+    });
+      
+    if (error) {
+      console.error('Grant posting permission error:', error);
+      throw error;
+    }
+    
+    console.log('Successfully updated can_post for user:', userId);
+    return true;
+  } catch (error) {
+    console.error('Error in updateCanPost:', error);
+    throw error;
+  }
 }
 
 export async function encryptEmail(email: string) {
