@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase/client';
@@ -14,6 +14,20 @@ export default function LoginPage() {
   const router = useRouter();
   const { signIn } = useAuth();
   const returnTo = router.query.returnTo as string || '/forum';
+
+  useEffect(() => {
+    // Check if user is coming from email verification
+    if (router.query.verified === 'true') {
+      toast.success('Email verified successfully! Please log in to continue.', {
+        duration: 5000,
+      });
+      
+      // Remove the verified parameter from the URL without refreshing the page
+      const url = new URL(window.location.href);
+      url.searchParams.delete('verified');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [router.query.verified]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

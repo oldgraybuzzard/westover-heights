@@ -241,7 +241,7 @@ export default function SignUpPage() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/verify`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             display_name: displayName.trim(),
           }
@@ -263,36 +263,14 @@ export default function SignUpPage() {
         throw profileError;
       }
 
-      // Show success message
-      toast.success('Account created successfully!', {
+      // Show success message with clear instructions
+      toast.success('Account created! Please check your email to verify your account.', {
         id: toastId,
-        duration: 3000
+        duration: 5000
       });
 
-      // Sign in with the same credentials
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) {
-        console.error('Auto-login failed:', signInError);
-        toast.error('Account created but login failed. Please log in manually.', {
-          duration: 5000
-        });
-        router.push('/login');
-        return;
-      }
-
-      // Show welcome message and redirect to home page
-      toast.success(`Welcome, ${displayName}!`, {
-        duration: 5000,
-        icon: '👋'
-      });
-
-      // Wait a moment for the user to see both success messages
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      router.push('/'); // Changed from /dashboard to /
+      // Don't attempt auto-login, wait for email verification
+      router.push('/signup/check-email');
     } catch (error) {
       console.error('Full error object:', error);
       toast.error(

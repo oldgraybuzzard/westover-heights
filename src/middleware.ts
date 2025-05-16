@@ -51,6 +51,44 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL(`/reset-password?token=${token}`, request.url));
     }
 
+    // Handle auth callback redirects
+    if (path.startsWith('/auth/callback')) {
+      console.log('Auth callback path detected in middleware');
+      return NextResponse.next();
+    }
+
+    // Handle email verification links that might be malformed
+    if (path === '/' && (
+      request.nextUrl.searchParams.has('type') || 
+      request.nextUrl.searchParams.has('code')
+    )) {
+      const type = request.nextUrl.searchParams.get('type');
+      const code = request.nextUrl.searchParams.get('code');
+      
+      if (type === 'signup' || type === 'recovery' || code) {
+        console.log('Redirecting auth params from homepage to callback page');
+        const redirectUrl = new URL('/auth/callback', request.url);
+        
+        // Copy all query parameters without using iterator
+        const params = request.nextUrl.searchParams;
+        // Get all parameter names and copy them individually
+        const paramKeys = Array.from(params.keys());
+        paramKeys.forEach(key => {
+          const value = params.get(key);
+          if (value !== null) {
+            redirectUrl.searchParams.set(key, value);
+          }
+        });
+        
+        return NextResponse.redirect(redirectUrl);
+      }
+    }
+
+    // Redirect from auth callback to login with verified parameter
+    if (path.startsWith('/auth/callback') && request.nextUrl.searchParams.has('verified')) {
+      return NextResponse.redirect(new URL('/login?verified=true', request.url));
+    }
+
     return res;
   } catch (e) {
     console.error('Middleware error:', e);

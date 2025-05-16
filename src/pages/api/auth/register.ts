@@ -5,6 +5,7 @@ import { z } from 'zod';
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
+  displayName: z.string().optional(),
 });
 
 export default async function handler(
@@ -16,7 +17,7 @@ export default async function handler(
   }
 
   try {
-    const { email, password } = registerSchema.parse(req.body);
+    const { email, password, displayName = '' } = registerSchema.parse(req.body);
 
     // First, encrypt the email
     const { data: encryptedEmail, error: encryptError } = await supabase
@@ -31,7 +32,8 @@ export default async function handler(
       options: {
         emailRedirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback`,
         data: {
-          encrypted_email: encryptedEmail
+          encrypted_email: encryptedEmail,
+          display_name: displayName
         }
       },
     });

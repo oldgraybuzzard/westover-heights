@@ -6,8 +6,8 @@ import { FaPlus, FaFilter } from 'react-icons/fa';
 import { useAuth } from '@/contexts/AuthContext';
 import { subscribeToRoleChanges } from '@/lib/supabase/client';
 import { toast } from 'react-hot-toast';
-import { UserRole } from '@/types/user';
 import { useRouter } from 'next/router';
+import { UserRole } from '@/types/user';
 
 interface ProfileData {
   id: string;
