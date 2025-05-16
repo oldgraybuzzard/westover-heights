@@ -51,9 +51,18 @@ export default function AuthCallbackPage() {
           const errorType = router.query.error as string;
           const errorCodeValue = router.query.error_code as string || '';
           
+          // Extract email from the URL if available
+          const email = router.query.email as string || '';
+          
           setErrorMessage(errorDesc);
           setErrorCode(errorCodeValue);
           setVerificationStatus('error');
+          
+          // Store email for resend verification
+          if (email) {
+            sessionStorage.setItem('verification_email', email);
+          }
+          
           return;
         }
         
@@ -179,11 +188,14 @@ export default function AuthCallbackPage() {
     let actionText = 'Go to Login';
     let actionLink = '/login';
     
+    // Get email from session storage if available
+    const email = typeof window !== 'undefined' ? sessionStorage.getItem('verification_email') || '' : '';
+    
     if (errorCode === 'otp_expired' || errorMessage.includes('expired')) {
       errorTitle = 'Verification Link Expired';
       errorInstructions = 'Your verification link has expired. Please request a new verification email.';
       actionText = 'Request New Verification Email';
-      actionLink = '/resend-verification';
+      actionLink = email ? `/resend-verification?email=${encodeURIComponent(email)}` : '/resend-verification';
     }
 
     return (

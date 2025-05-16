@@ -116,24 +116,34 @@ export default function AccountSettings() {
     setIsDeleting(true);
 
     try {
-      // Delete user's data in order
-      await Promise.all([
-        supabase.from('replies').delete().eq('author_id', user.id),
-        supabase.from('topics').delete().eq('author_id', user.id),
-        supabase.from('payment_history').delete().eq('user_id', user.id),
-        supabase.from('profiles').delete().eq('id', user.id)
-      ]);
+      // Get the current session
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      
+      if (!token) {
+        throw new Error('No active session found');
+      }
 
-      // Delete auth user
-      const { error } = await supabase.auth.admin.deleteUser(user.id);
-      if (error) throw error;
+      // Call our API endpoint to delete the account
+      const response = await fetch('/api/user/delete-account', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete account');
+      }
 
       await signOut();
       router.push('/');
       toast.success('Your account has been deleted');
     } catch (error) {
       console.error('Error deleting account:', error);
-      toast.error('Failed to delete account');
+      toast.error(error instanceof Error ? error.message : 'Failed to delete account');
     } finally {
       setIsDeleting(false);
     }

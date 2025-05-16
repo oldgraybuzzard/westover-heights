@@ -1,13 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'react-hot-toast';
-import { FaEnvelope, FaSpinner } from 'react-icons/fa';
+import { FaSpinner } from 'react-icons/fa';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 
 export default function ResendVerificationPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const router = useRouter();
+
+  // Check if we have an email from the query params (from expired link)
+  useEffect(() => {
+    if (router.isReady && router.query.email) {
+      setEmail(router.query.email as string);
+    }
+  }, [router.isReady, router.query]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,54 +43,24 @@ export default function ResendVerificationPage() {
     }
   };
 
-  if (submitted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
-          <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100">
-              <FaEnvelope className="h-8 w-8 text-blue-600" />
-            </div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Check your email
-            </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
-              We've sent a new verification link to {email}.
-              Please check your inbox and click the link to verify your account.
-            </p>
-            <p className="mt-2 text-center text-sm text-gray-600">
-              After verifying your email, you'll need to log in with your credentials to access the forum.
-            </p>
-            
-            <div className="mt-6">
-              <Link href="/login" className="text-primary hover:text-primary/80">
-                Return to login
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Resend Verification Email
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your email address below and we'll send you a new verification link.
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white">
+      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold">Resend Verification Email</h1>
+          <p className="mt-2 text-gray-600">
+            {submitted
+              ? "We've sent a new verification email. Please check your inbox."
+              : "Enter your email address and we'll send you a new verification link."}
           </p>
         </div>
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email address
-            </label>
-            <div className="mt-1">
+
+        {!submitted ? (
+          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email address
+              </label>
               <input
                 id="email"
                 name="email"
@@ -90,34 +69,56 @@ export default function ResendVerificationPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
                 placeholder="you@example.com"
               />
             </div>
-          </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-            >
-              {loading ? (
-                <>
-                  <FaSpinner className="animate-spin mr-2" /> Sending...
-                </>
-              ) : (
-                'Send Verification Email'
-              )}
-            </button>
+            <div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+              >
+                {loading ? 'Sending...' : 'Send Verification Email'}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="mt-8 space-y-6">
+            <div className="bg-green-50 p-4 rounded-md">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-green-800">
+                    Verification email sent to {email}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600">
+              Please check your email inbox and spam folder. The verification link will expire after 24 hours.
+            </p>
+            <div>
+              <button
+                onClick={() => setSubmitted(false)}
+                className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+              >
+                Send to a different email
+              </button>
+            </div>
           </div>
-          
-          <div className="text-center">
-            <Link href="/login" className="text-sm text-primary hover:text-primary/80">
-              Return to login
-            </Link>
-          </div>
-        </form>
+        )}
+
+        <div className="text-center mt-4">
+          <Link href="/login" className="text-sm font-medium text-primary hover:text-primary-dark">
+            Return to login
+          </Link>
+        </div>
       </div>
     </div>
   );
