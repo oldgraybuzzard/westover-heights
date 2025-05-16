@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'react-hot-toast';
-import { FaSpinner, FaCheckCircle } from 'react-icons/fa';
+import { FaSpinner, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
 import Link from 'next/link';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
   const [verificationStatus, setVerificationStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState('');
+  const [errorCode, setErrorCode] = useState('');
 
   useEffect(() => {
     // Log for debugging
@@ -17,6 +18,19 @@ export default function AuthCallbackPage() {
 
     const handleAuthCallback = async () => {
       try {
+        // Check for error parameters first
+        if (router.query.error) {
+          console.error('Error in callback URL:', router.query.error);
+          const errorDesc = router.query.error_description as string || 'Verification failed';
+          const errorType = router.query.error as string;
+          const errorCodeValue = router.query.error_code as string || '';
+          
+          setErrorMessage(errorDesc);
+          setErrorCode(errorCodeValue);
+          setVerificationStatus('error');
+          return;
+        }
+        
         // Get the auth code from the URL
         const code = router.query.code;
         
@@ -53,7 +67,7 @@ export default function AuthCallbackPage() {
     if (router.isReady && Object.keys(router.query).length > 0) {
       handleAuthCallback();
     }
-  }, [router.isReady, router.query, router]);
+  }, [router.isReady, router.query]);
 
   if (verificationStatus === 'loading') {
     return (
@@ -68,19 +82,38 @@ export default function AuthCallbackPage() {
   }
 
   if (verificationStatus === 'error') {
+    // Customize error message based on error code
+    let errorTitle = 'Verification Failed';
+    let errorInstructions = 'Please try again or contact support if the problem persists.';
+    let actionText = 'Return to Login';
+    let actionLink = '/login';
+    
+    if (errorCode === 'otp_expired' || errorMessage.includes('expired')) {
+      errorTitle = 'Verification Link Expired';
+      errorInstructions = 'Your verification link has expired. Please request a new verification email.';
+      actionText = 'Request New Verification Email';
+      actionLink = '/resend-verification';
+    }
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white">
         <div className="text-center max-w-md px-4">
           <div className="bg-red-100 text-red-600 p-3 rounded-full inline-flex mx-auto mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <FaExclamationTriangle className="h-8 w-8" />
           </div>
-          <h2 className="text-xl font-semibold mb-2">Verification Failed</h2>
-          <p className="text-gray-600 mb-6">{errorMessage}</p>
-          <Link href="/login" className="inline-block bg-primary text-white px-4 py-2 rounded-md font-medium hover:bg-primary/90 transition-colors">
-            Return to Login
-          </Link>
+          <h2 className="text-xl font-semibold mb-2">{errorTitle}</h2>
+          <p className="text-gray-600 mb-2">{errorMessage}</p>
+          <p className="text-gray-600 mb-6">{errorInstructions}</p>
+          
+          <div className="space-y-4">
+            <Link href={actionLink} className="inline-block bg-primary text-white px-4 py-2 rounded-md font-medium hover:bg-primary/90 transition-colors w-full">
+              {actionText}
+            </Link>
+            
+            <Link href="/login" className="inline-block text-gray-600 hover:text-gray-900 px-4 py-2 rounded-md font-medium transition-colors">
+              Go to Login
+            </Link>
+          </div>
         </div>
       </div>
     );
