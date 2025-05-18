@@ -62,3 +62,38 @@ A HIPAA-compliant medical Q&A platform that enables secure, anonymous communicat
 ### Installation
 
 1. Clone the repository
+
+## Stripe Configuration
+
+This application uses Stripe for payment processing. It's configured to use:
+
+- **Test keys** in development environments (`NODE_ENV !== 'production'`)
+- **Live keys** in production environments (`NODE_ENV === 'production'`)
+
+### Environment Variables
+
+You need to set up the following environment variables:
+
+```
+# Test keys (for development)
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_test_key
+STRIPE_SECRET_KEY=sk_test_your_test_key
+
+# Live keys (for production)
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_LIVE=pk_live_your_live_key
+STRIPE_SECRET_KEY_LIVE=sk_live_your_live_key
+```
+
+### Testing Payments
+
+In development mode, you can use Stripe test cards to simulate payments:
+
+- Success: `4242 4242 4242 4242`
+- Authentication Required: `4000 0027 6000 3184`
+- Decline: `4000 0000 0000 0002`
+
+Use any future expiration date and any 3-digit CVC code.
+
+### Production Payments
+
+In production, real credit cards will be charged. Make sure you have properly set up your Stripe account and webhook endpoints.

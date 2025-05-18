@@ -12,6 +12,7 @@ import Skeleton from '@/components/Skeleton';
 import { useNotification } from '@/contexts/NotificationContext';
 import { User } from '@supabase/supabase-js';
 import { UserRole } from '@/types/user';
+import { sendFollowUpNotification } from '@/lib/services/notificationService';
 
 interface Reply {
   id: string;
@@ -207,13 +208,10 @@ const TopicPage: React.FC = () => {
     return isValid;
   };
 
-  const handleSubmit = async () => {
-    if (!user) {
-      showNotification('error', 'You must be logged in to reply');
-      return;
-    }
-
-    if (!validateReply(replyContent)) {
+  const handleReplySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!replyContent.trim()) {
+      setReplyErrors({ content: ['Reply cannot be empty'] });
       return;
     }
 
@@ -259,36 +257,17 @@ const TopicPage: React.FC = () => {
 
       if (replyError) throw replyError;
 
-      showNotification('success', 'Reply posted successfully');
-      
-      // Update with real data
-      if (topic && id) {
-        const updatedData = await fetchTopic(id as string);
-        const formattedData: TopicData = {
-          ...updatedData,
-          author: {
-            ...updatedData.author,
-            role: updatedData.author.roles[0] as UserRole || 'PARTICIPANT' as UserRole
-          },
-          replies: updatedData.replies?.map((reply: any) => ({
-            id: reply.id,
-            content: reply.content,
-            created_at: reply.created_at,
-            author: {
-              ...reply.author,
-              roles: reply.author.roles || [],
-              role: reply.author.roles?.[0] as UserRole || 'PARTICIPANT' as UserRole,
-              email_visible: reply.author.email_visible || false,
-              created_at: reply.author.created_at,
-              updated_at: reply.author.updated_at
-            }
-          })) || []
-        };
-        setTopic(formattedData);
+      // Send notification to Terri if this is a follow-up from the original author
+      if (topic && user.id === topic.author_id && !userRoles?.includes('EXPERT')) {
+        await sendFollowUpNotification(
+          'terri@westoverheights.com',
+          topic.title,
+          user.user_metadata?.display_name || 'A user',
+          id as string
+        );
       }
-    } catch (e) {
-      console.error('Error posting reply:', e);
-      showNotification('error', e instanceof Error ? e.message : 'Failed to post reply');
+
+      showNotification('success', 'Reply posted successfully');
       
       // Revert optimistic update if there was an error
       if (topic && id) {
@@ -719,7 +698,7 @@ const TopicPage: React.FC = () => {
               {(isExpertUser() || replyCount < 3) && (
                 <div className="flex justify-end">
                   <button
-                    onClick={handleSubmit}
+                    onClick={handleReplySubmit}
                     className={`btn-primary ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                     disabled={isSubmitting}
                   >

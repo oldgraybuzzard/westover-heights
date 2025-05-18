@@ -1,26 +1,35 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'react-hot-toast';
-import { FaSpinner } from 'react-icons/fa';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
+import Head from 'next/head';
 
 export default function ResendVerificationPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
   const router = useRouter();
 
-  // Check if we have an email from the query params (from expired link)
   useEffect(() => {
-    if (router.isReady && router.query.email) {
-      setEmail(router.query.email as string);
+    // Check if email is in query params or session storage
+    const queryEmail = router.query.email as string;
+    const storedEmail = typeof window !== 'undefined' 
+      ? sessionStorage.getItem('verification_email') 
+      : null;
+    
+    if (queryEmail) {
+      setEmail(queryEmail);
+    } else if (storedEmail) {
+      setEmail(storedEmail);
     }
-  }, [router.isReady, router.query]);
+  }, [router.query.email]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
 
     try {
       const { error } = await supabase.auth.resend({
@@ -35,91 +44,131 @@ export default function ResendVerificationPage() {
 
       setSubmitted(true);
       toast.success('Verification email sent successfully');
-    } catch (error) {
+      
+      // Store email in session storage
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('verification_email', email);
+      }
+    } catch (error: any) {
       console.error('Error sending verification email:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to send verification email');
+      setError(error.message || 'Failed to send verification email');
+      toast.error(error.message || 'Failed to send verification email');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">Resend Verification Email</h1>
-          <p className="mt-2 text-gray-600">
-            {submitted
-              ? "We've sent a new verification email. Please check your inbox."
-              : "Enter your email address and we'll send you a new verification link."}
-          </p>
-        </div>
+    <>
+      <Head>
+        <title>Resend Verification Email | Westover Heights</title>
+      </Head>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              Verify Your Email
+            </h2>
+            <p className="mt-2 text-center text-sm text-gray-600">
+              {!submitted 
+                ? 'We'll send you a verification link to confirm your email address.' 
+                : 'We've sent you a verification link. Please check your email.'}
+            </p>
+          </div>
 
-        {!submitted ? (
-          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-                placeholder="you@example.com"
-              />
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-              >
-                {loading ? 'Sending...' : 'Send Verification Email'}
-              </button>
-            </div>
-          </form>
-        ) : (
-          <div className="mt-8 space-y-6">
-            <div className="bg-green-50 p-4 rounded-md">
+          {error && (
+            <div className="rounded-md bg-red-50 p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-green-800">
-                    Verification email sent to {email}
-                  </p>
+                  <h3 className="text-sm font-medium text-red-800">{error}</h3>
                 </div>
               </div>
             </div>
-            <p className="text-sm text-gray-600">
-              Please check your email inbox and spam folder. The verification link will expire after 24 hours.
-            </p>
-            <div>
-              <button
-                onClick={() => setSubmitted(false)}
-                className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-              >
-                Send to a different email
-              </button>
-            </div>
-          </div>
-        )}
+          )}
 
-        <div className="text-center mt-4">
-          <Link href="/login" className="text-sm font-medium text-primary hover:text-primary-dark">
-            Return to login
-          </Link>
+          {!submitted ? (
+            <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+              <div className="rounded-md shadow-sm -space-y-px">
+                <div>
+                  <label htmlFor="email-address" className="sr-only">
+                    Email address
+                  </label>
+                  <input
+                    id="email-address"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                    placeholder="Email address"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Sending...' : 'Send Verification Email'}
+                </button>
+              </div>
+              
+              <div className="text-center">
+                <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900">
+                  Back to login
+                </Link>
+              </div>
+            </form>
+          ) : (
+            <div className="mt-8 space-y-6">
+              <div className="bg-green-50 p-4 rounded-md border border-green-200">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-green-800">Verification email sent</h3>
+                    <div className="mt-2 text-sm text-green-700">
+                      <p>
+                        Please check your inbox and click the verification link to complete your registration.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="text-center space-y-4">
+                <p className="text-sm text-gray-600">
+                  Didn't receive the email? Check your spam folder or
+                </p>
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="text-primary hover:text-primary/80 font-medium"
+                >
+                  {loading ? 'Sending...' : 'Send again'}
+                </button>
+                <div className="pt-2">
+                  <Link href="/login" className="inline-block text-sm text-gray-600 hover:text-gray-900 bg-gray-100 px-4 py-2 rounded-md">
+                    Back to login
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-    </div>
+    </>
   );
 }

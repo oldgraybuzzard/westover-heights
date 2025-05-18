@@ -94,7 +94,15 @@ function PaymentForm({ onSuccess, onClose, mode = 'new' }: Omit<PaymentModalProp
 
       if (paymentIntent && paymentIntent.status === 'succeeded') {
         console.log('Payment succeeded:', paymentIntent.id);
-        onSuccess(paymentIntent.id);
+        
+        try {
+          // Try to update user permissions
+          await onSuccess(paymentIntent.id);
+        } catch (err) {
+          console.error('Error updating permissions:', err);
+          // Even if updating permissions fails, redirect to success page
+          window.location.href = `${window.location.origin}/payment-success?payment_intent=${paymentIntent.id}&payment_intent_client_secret=${paymentIntent.client_secret}`;
+        }
       } else if (paymentIntent) {
         // Handle other statuses
         console.log('Payment status:', paymentIntent.status);

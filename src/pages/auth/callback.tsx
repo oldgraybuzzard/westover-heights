@@ -63,6 +63,14 @@ export default function AuthCallbackPage() {
             sessionStorage.setItem('verification_email', email);
           }
           
+          // Add more detailed logging
+          console.log('Full error details:', {
+            error: errorType,
+            description: errorDesc,
+            code: errorCodeValue,
+            email: email
+          });
+          
           return;
         }
         
@@ -197,15 +205,14 @@ export default function AuthCallbackPage() {
       actionText = 'Request New Verification Email';
       actionLink = email ? `/resend-verification?email=${encodeURIComponent(email)}` : '/resend-verification';
     }
-
+    
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white">
-        <div className="text-center max-w-md px-4">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8 text-center">
           <div className="bg-red-100 text-red-600 p-3 rounded-full inline-flex mx-auto mb-4">
             <FaExclamationTriangle className="h-8 w-8" />
           </div>
           <h2 className="text-xl font-semibold mb-2">{errorTitle}</h2>
-          <p className="text-gray-600 mb-2">{errorMessage}</p>
           <p className="text-gray-600 mb-6">{errorInstructions}</p>
           
           <div className="space-y-4">

@@ -4,6 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { updateCanPost } from '@/lib/supabase/client';
 import { toast } from 'react-hot-toast';
 import { supabase } from '@/lib/supabase/client';
+import { isTestMode } from '@/lib/stripe/client';
+import { TEST_CARDS } from '@/lib/stripe/testCards';
 
 interface PaymentFormProps {
   amount: number;
@@ -110,7 +112,17 @@ export default function PaymentForm({ amount, onPaymentSuccess, onPaymentError }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6 p-6">
+      {isTestMode && (
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded mb-4">
+          <p className="font-medium">⚠️ Test Mode</p>
+          <p className="text-sm">
+            This is a test environment. To test payments, use test card 
+            <span className="font-mono bg-yellow-100 px-1 mx-1">{TEST_CARDS.success}</span>
+            with any future expiration date and any CVC.
+          </p>
+        </div>
+      )}
       {error && (
         <div className="p-3 bg-red-50 text-red-700 rounded-md text-sm">
           {error}
