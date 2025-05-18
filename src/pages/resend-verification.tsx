@@ -71,8 +71,8 @@ export default function ResendVerificationPage() {
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600">
               {!submitted 
-                ? 'We'll send you a verification link to confirm your email address.' 
-                : 'We've sent you a verification link. Please check your email.'}
+                ? "We'll send you a verification link to confirm your email address." 
+                : "We've sent you a verification link. Please check your email."}
             </p>
           </div>
 

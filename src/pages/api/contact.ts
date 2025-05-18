@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { z } from 'zod';
 import { contactFormSchema } from '@/lib/validations/contact';
 import Mailjet from 'node-mailjet';
 import rateLimit from 'express-rate-limit';
@@ -17,20 +18,48 @@ const mailjet = new Mailjet({
 });
 
 const verifyRecaptcha = async (token: string) => {
-  const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${token}`,
-  });
-
-  const data = await response.json();
-  
-  // For v3, we also check the score
-  if (!data.success || data.score < 0.5) {
-    throw new Error('reCAPTCHA verification failed');
+  if (!process.env.RECAPTCHA_SECRET_KEY) {
+    console.error('RECAPTCHA_SECRET_KEY is not defined');
+    throw new Error('Server configuration error');
   }
-  
-  return data;
+
+  try {
+    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${token}`,
+    });
+
+    if (!response.ok) {
+      console.error('reCAPTCHA verification failed with status:', response.status);
+      throw new Error('reCAPTCHA verification failed');
+    }
+
+    const data = await response.json();
+    console.log('reCAPTCHA verification response:', {
+      success: data.success,
+      score: data.score,
+      action: data.action,
+      hostname: data.hostname,
+      timestamp: new Date().toISOString()
+    });
+    
+    // For v3, we also check the score
+    if (!data.success) {
+      console.error('reCAPTCHA verification unsuccessful:', data);
+      throw new Error('reCAPTCHA verification failed');
+    }
+    
+    if (data.score < 0.5) {
+      console.warn('reCAPTCHA score too low:', data.score);
+      throw new Error('Suspicious activity detected. Please try again later.');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('reCAPTCHA verification error:', error);
+    throw new Error('Failed to verify you are not a robot. Please try again.');
+  }
 };
 
 const sendEmail = async (data: {
@@ -38,10 +67,8 @@ const sendEmail = async (data: {
   email: string;
   reason: string;
   message: string;
-  phone?: string;
-  referralSource?: string;
 }) => {
-  const { name, email, reason, message, phone, referralSource } = data;
+  const { name, email, reason, message } = data;
 
   const emailContent = `
     New Contact Form Submission
@@ -49,8 +76,6 @@ const sendEmail = async (data: {
     Reason: ${reason}
     Name: ${name}
     Email: ${email}
-    Phone: ${phone || 'Not provided'}
-    Referral Source: ${referralSource || 'Not provided'}
     
     Message:
     ${message}
@@ -60,13 +85,13 @@ const sendEmail = async (data: {
     Messages: [
       {
         From: {
-          Email: process.env.CONTACT_EMAIL_FROM!,
+          Email: process.env.CONTACT_EMAIL_FROM || 'noreply@westoverheights.com',
           Name: 'Westover Heights Contact Form',
         },
         To: [
           {
-            Email: process.env.CONTACT_EMAIL_TO!,
-            Name: 'Westover Research Group',
+            Email: 'terri@westoverheights.com',
+            Name: 'Terri Warren',
           },
         ],
         Subject: `New Contact Form Submission: ${reason}`,
@@ -113,18 +138,41 @@ export default async function handler(
 
   try {
     console.log('Received contact form submission');
+    
+    // Validate the request body
+    if (!req.body || !req.body.recaptchaToken) {
+      console.error('Missing reCAPTCHA token');
+      return res.status(400).json({ message: 'Missing reCAPTCHA token' });
+    }
+    
     const validatedData = contactFormSchema.parse(req.body);
-    console.log('Form data validated:', validatedData);
+    console.log('Form data validated');
     
     // Verify reCAPTCHA
     console.log('Verifying reCAPTCHA token...');
-    await verifyRecaptcha(validatedData.recaptchaToken);
-    console.log('reCAPTCHA verified successfully');
+    try {
+      await verifyRecaptcha(validatedData.recaptchaToken);
+      console.log('reCAPTCHA verified successfully');
+    } catch (error) {
+      console.error('reCAPTCHA verification failed:', error);
+      return res.status(401).json({ 
+        message: error instanceof Error 
+          ? error.message 
+          : 'reCAPTCHA verification failed'
+      });
+    }
 
     // Send email using Mailjet
     console.log('Sending email via Mailjet...');
-    await sendEmail(validatedData);
-    console.log('Email sent successfully');
+    try {
+      await sendEmail(validatedData);
+      console.log('Email sent successfully');
+    } catch (error) {
+      console.error('Failed to send email:', error);
+      return res.status(500).json({ 
+        message: 'Failed to send your message. Please try again later.'
+      });
+    }
 
     return res.status(200).json({ message: 'Message sent successfully' });
   } catch (error) {
@@ -133,8 +181,13 @@ export default async function handler(
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     });
-    return res.status(400).json({ 
-      message: error instanceof Error ? error.message : 'Invalid form data' 
+    
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: 'Invalid form data', errors: error.errors });
+    }
+    
+    return res.status(500).json({ 
+      message: 'An error occurred while processing your request'
     });
   }
 } 

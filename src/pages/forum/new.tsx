@@ -30,6 +30,12 @@ export default function NewTopicPage() {
 
     async function checkPostingPermission() {
       try {
+        // Add null check for user
+        if (!user) {
+          console.log('User is null, cannot check permissions');
+          return;
+        }
+        
         console.log('Starting permission check for user:', user.id);
 
         // First check if the user has any payment history

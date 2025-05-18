@@ -210,6 +210,13 @@ const TopicPage: React.FC = () => {
 
   const handleReplySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Add null check for user
+    if (!user) {
+      toast.error('You must be logged in to reply');
+      return;
+    }
+    
     if (!replyContent.trim()) {
       setReplyErrors({ content: ['Reply cannot be empty'] });
       return;
