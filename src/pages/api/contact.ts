@@ -94,7 +94,7 @@ const sendEmail = async (data: {
             Name: 'Terri Warren',
           },
         ],
-        Subject: `New Contact Form Submission: ${reason}`,
+        Subject: `New Contact Form Submission`,
         TextPart: emailContent,
         HTMLPart: emailContent.replace(/\n/g, '<br>'),
         CustomID: 'ContactForm',

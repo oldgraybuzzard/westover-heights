@@ -24,6 +24,12 @@ export async function middleware(request: NextRequest) {
     }
 
     const path = request.nextUrl.pathname;
+    
+    // Allow access to maintenance page
+    if (path === '/maintenance') {
+      return NextResponse.next();
+    }
+    
     const protectedPaths = ['/admin', '/forum/new'];
 
     if (protectedPaths.some(p => path.startsWith(p)) && !session) {
